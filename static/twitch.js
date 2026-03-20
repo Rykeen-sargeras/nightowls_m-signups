@@ -1,14 +1,20 @@
 // ============================================
-// TWITCH — Embed players using iframes with live-priority sorting
+// TWITCH — Interactive embeds with live-priority sorting
+// Uses official Twitch.Player JS API with ONLINE/OFFLINE events
 // ============================================
 const TwitchManager = {
+    players: {},
     liveStatus: {},
 
     init() {
+        // Wait for Twitch embed script to be ready
+        if (typeof Twitch === "undefined" || typeof Twitch.Player === "undefined") {
+            Admin.log("Waiting for Twitch embed script...");
+            setTimeout(() => this.init(), 500);
+            return;
+        }
+        Admin.log("Twitch embed script loaded");
         this.renderAll();
-        // Check live status after a short delay, then periodically
-        setTimeout(() => this.checkLiveStatus(), 3000);
-        setInterval(() => this.checkLiveStatus(), CONFIG.TWITCH_CHECK_INTERVAL);
     },
 
     renderAll() {
@@ -25,81 +31,73 @@ const TwitchManager = {
         if (!container || channels.length === 0) return;
         container.innerHTML = "";
 
-        const parent = window.location.hostname;
-
         channels.forEach(ch => {
+            // Wrapper
             const wrapper = document.createElement("div");
             wrapper.className = "twitch-embed-wrapper";
             wrapper.id = `twitch-wrap-${ch.username}`;
             wrapper.dataset.username = ch.username;
             wrapper.dataset.priority = ch.priority ? "true" : "false";
 
+            // Label bar
             const label = document.createElement("div");
             label.className = "twitch-label";
             label.innerHTML = `
                 <a href="https://twitch.tv/${ch.username}" target="_blank" class="twitch-name">${ch.display}</a>
-                <span class="twitch-status" id="status-${ch.username}">Checking...</span>
+                <span class="twitch-status" id="status-${ch.username}">Loading...</span>
             `;
             wrapper.appendChild(label);
 
+            // Player container
             const playerDiv = document.createElement("div");
             playerDiv.className = "twitch-player";
-
-            const iframe = document.createElement("iframe");
-            iframe.src = `https://player.twitch.tv/?channel=${ch.username}&enableExtensions=true&muted=true&parent=${parent}&player=popout&quality=auto&volume=0`;
-            iframe.allowFullscreen = true;
-            iframe.setAttribute("frameborder", "0");
-            iframe.setAttribute("scrolling", "no");
-            iframe.setAttribute("allow", "autoplay; encrypted-media");
-            playerDiv.appendChild(iframe);
-
+            const embedTarget = document.createElement("div");
+            embedTarget.id = `twitch-player-${ch.username}`;
+            embedTarget.style.width = "100%";
+            embedTarget.style.height = "100%";
+            playerDiv.appendChild(embedTarget);
             wrapper.appendChild(playerDiv);
+
             container.appendChild(wrapper);
+
+            // Create Twitch.Player
+            try {
+                const player = new Twitch.Player(`twitch-player-${ch.username}`, {
+                    width: "100%",
+                    height: "100%",
+                    channel: ch.username,
+                    parent: [window.location.hostname],
+                    muted: true,
+                    autoplay: false,
+                });
+
+                this.players[ch.username] = player;
+                this.liveStatus[ch.username] = false;
+
+                // Listen for ONLINE/OFFLINE events
+                player.addEventListener(Twitch.Player.ONLINE, () => {
+                    Admin.log(`${ch.display} went LIVE`);
+                    this.liveStatus[ch.username] = true;
+                    this._updateBadge(ch.username, true);
+                    this._reorderByLiveStatus();
+                });
+
+                player.addEventListener(Twitch.Player.OFFLINE, () => {
+                    Admin.log(`${ch.display} went OFFLINE`);
+                    this.liveStatus[ch.username] = false;
+                    this._updateBadge(ch.username, false);
+                    this._reorderByLiveStatus();
+                });
+
+                player.addEventListener(Twitch.Player.READY, () => {
+                    Admin.log(`${ch.display} player ready`);
+                });
+
+            } catch (e) {
+                Admin.log(`Twitch embed error for ${ch.display}: ${e.message}`);
+                embedTarget.innerHTML = `<a href="https://twitch.tv/${ch.username}" target="_blank" class="twitch-fallback">Watch ${ch.display} on Twitch</a>`;
+            }
         });
-    },
-
-    async checkLiveStatus() {
-        // Use a lightweight check — try fetching each channel's Twitch page
-        // or use the oembed endpoint which doesn't need auth
-        const channels = CONFIG.TWITCH_CHANNELS;
-
-        for (const ch of channels) {
-            try {
-                // Twitch oembed returns data if channel exists, but doesn't directly tell live status
-                // Instead, we check the static thumbnail which changes when live
-                const thumbUrl = `https://static-cdn.jtvnw.net/previews-ttv/live_user_${ch.username}-80x45.jpg`;
-                const response = await fetch(thumbUrl, { method: "HEAD", mode: "no-cors" });
-                // If we get here without error, channel might be live
-                // no-cors doesn't give us status, so use a different approach
-
-                // Better approach: Use the Twitch iframe's behavior
-                // For now, mark all as unknown and let users see the embed
-                this.liveStatus[ch.username] = false;
-                this._updateBadge(ch.username, false);
-            } catch (e) {
-                this.liveStatus[ch.username] = false;
-                this._updateBadge(ch.username, false);
-            }
-        }
-
-        // Try the Twitch GraphQL-less approach: check oembed
-        for (const ch of channels) {
-            try {
-                const res = await fetch(`https://www.twitch.tv/${ch.username}`, { mode: "no-cors" });
-                // Can't read the response in no-cors, this is just a connectivity check
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        this._reorderByLiveStatus();
-    },
-
-    // Call this from outside if you get live data (e.g., from a backend endpoint)
-    setLiveStatus(username, isLive) {
-        this.liveStatus[username] = isLive;
-        this._updateBadge(username, isLive);
-        this._reorderByLiveStatus();
     },
 
     _updateBadge(username, isLive) {
@@ -109,8 +107,8 @@ const TwitchManager = {
             badge.textContent = "LIVE";
             badge.className = "twitch-status live";
         } else {
-            badge.textContent = "";
-            badge.className = "twitch-status";
+            badge.textContent = "Offline";
+            badge.className = "twitch-status offline";
         }
     },
 
@@ -123,28 +121,30 @@ const TwitchManager = {
         const live = channels.filter(c => this.liveStatus[c.username]);
         const offline = channels.filter(c => !this.liveStatus[c.username]);
 
-        // Priority live first, then other live, then priority offline
         const priorityLive = live.filter(c => c.priority);
         const otherLive = live.filter(c => !c.priority);
         const priorityOffline = offline.filter(c => c.priority);
-        const otherOffline = offline.filter(c => !c.priority);
 
-        // Top 2 spots: priority live → other live → priority offline
+        // Top 2: priority live first, then other live to fill, then priority offline
         let topChannels = [...priorityLive];
-        if (topChannels.length < 2) topChannels.push(...otherLive.splice(0, 2 - topChannels.length));
-        if (topChannels.length < 2) topChannels.push(...priorityOffline.splice(0, 2 - topChannels.length));
+        if (topChannels.length < 2) {
+            topChannels.push(...otherLive.splice(0, 2 - topChannels.length));
+        }
+        if (topChannels.length < 2) {
+            topChannels.push(...priorityOffline.splice(0, 2 - topChannels.length));
+        }
 
         const topUsernames = new Set(topChannels.map(c => c.username));
         let bottomChannels = channels.filter(c => !topUsernames.has(c.username));
 
-        // Sort bottom: live first
+        // Sort bottom: live channels first
         bottomChannels.sort((a, b) => {
             const aL = this.liveStatus[a.username] ? 1 : 0;
             const bL = this.liveStatus[b.username] ? 1 : 0;
             return bL - aL;
         });
 
-        // Move wrappers
+        // Move DOM wrappers to correct containers
         topChannels.forEach(ch => {
             const w = document.getElementById(`twitch-wrap-${ch.username}`);
             if (w) topContainer.appendChild(w);
@@ -153,5 +153,7 @@ const TwitchManager = {
             const w = document.getElementById(`twitch-wrap-${ch.username}`);
             if (w) bottomContainer.appendChild(w);
         });
+
+        Admin.log(`Twitch reorder: top=[${topChannels.map(c=>c.display)}] bottom=[${bottomChannels.map(c=>c.display)}]`);
     },
 };
