@@ -5,7 +5,7 @@ from datetime import datetime
 # Full WoW Class → Spec → Role mapping from the spec chart
 VALID_SPECS: dict[str, dict[str, str]] = {
     "Death Knight": {"Blood": "Tank", "Frost": "Melee", "Unholy": "Melee"},
-    "Demon Hunter": {"Havoc": "Melee", "Vengeance": "Tank"},
+    "Demon Hunter": {"Devourer": "Ranged", "Havoc": "Melee", "Vengeance": "Tank"},
     "Druid": {"Balance": "Ranged", "Feral": "Melee", "Guardian": "Tank", "Restoration": "Healer"},
     "Evoker": {"Augmentation": "Ranged", "Devastation": "Ranged", "Preservation": "Healer"},
     "Hunter": {"Beast Mastery": "Ranged", "Marksmanship": "Ranged", "Survival": "Melee"},
