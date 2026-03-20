@@ -12,7 +12,13 @@
 <body>
 <div id="bg-layer"></div>
 <div id="particles"></div>
-<div id="timer-banner">Loading...</div>
+<div id="timer-banner">
+    <div class="banner-tabs">
+        <button class="banner-tab active" id="tabSignups" onclick="TwitchManager.switchTab('signups')">Signups</button>
+        <button class="banner-tab" id="tabStreams" onclick="TwitchManager.switchTab('streams')">Streams</button>
+    </div>
+    <div class="banner-timer" id="timerText">Loading...</div>
+</div>
 <button id="adminToggle" aria-label="Toggle Admin Panel"></button>
 <div id="adminSection">
     <div class="admin-inner" id="adminInner"></div>
@@ -23,14 +29,23 @@
         <div class="logo-container"><img src="/static/banner.png" alt="NightOwls Mythic+ Signups"></div>
         <div id="toast-container"></div>
         <div id="statusMsg"></div>
-        <div id="twitchTop" class="twitch-row"></div>
-        <div id="signupSection"></div>
-        <div id="lockedMessage"></div>
-        <div id="displayArea">
-            <div id="rosterView" class="roster-grid"></div>
-            <div id="groupView"></div>
+
+        <!-- SIGNUPS TAB -->
+        <div id="signupsTabContent">
+            <div id="signupSection"></div>
+            <div id="lockedMessage"></div>
+            <div id="displayArea">
+                <div id="rosterView" class="roster-grid"></div>
+                <div id="groupView"></div>
+            </div>
         </div>
-        <div id="twitchBottom" class="twitch-row"></div>
+
+        <!-- STREAMS TAB -->
+        <div id="streamsTabContent" style="display:none;">
+            <h3>NightOwls Streams</h3>
+            <div id="twitchTop" class="twitch-row"></div>
+            <div id="twitchBottom" class="twitch-row"></div>
+        </div>
     </div>
 </div>
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>

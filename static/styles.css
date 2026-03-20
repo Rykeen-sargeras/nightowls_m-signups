@@ -40,16 +40,41 @@ body {
 
 /* === TIMER BANNER === */
 #timer-banner {
-    text-align: center; background: rgba(0, 0, 0, 0.92);
+    background: rgba(0, 0, 0, 0.92);
     border-bottom: 2px solid var(--wow-gold);
-    padding: 14px 20px; font-family: 'Cinzel', serif; font-size: 1.05em;
+    padding: 0; font-family: 'Cinzel', serif; font-size: 1.05em;
     color: var(--wow-gold); position: fixed; top: 0; width: 100%;
     z-index: 3000; backdrop-filter: blur(6px);
     box-shadow: 0 5px 25px rgba(0,0,0,0.6); letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center;
+    height: 48px;
 }
 #timer-banner a { color: #fff; text-decoration: underline; }
-#timer-banner .timer-digits { display: inline-block; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
-#timer-banner .timer-sep { opacity: 0.5; margin: 0 2px; }
+.banner-tabs {
+    position: absolute; left: 16px; top: 0; height: 100%;
+    display: flex; align-items: center; gap: 4px;
+}
+.banner-tab {
+    background: transparent; border: none; color: #888;
+    font-family: 'Cinzel', serif; font-size: 0.75em;
+    padding: 6px 14px; cursor: pointer; letter-spacing: 0.5px;
+    text-transform: uppercase; transition: all 0.2s;
+    border-radius: 3px; width: auto; margin: 0;
+    box-shadow: none; text-shadow: none;
+}
+.banner-tab:hover { color: #ccc; background: rgba(255,255,255,0.05); }
+.banner-tab.active {
+    color: var(--wow-gold); background: rgba(255, 209, 0, 0.1);
+    border: 1px solid rgba(255, 209, 0, 0.3);
+}
+.banner-timer { text-align: center; }
+.banner-timer .timer-digits { display: inline-block; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+.banner-timer .timer-sep { opacity: 0.5; margin: 0 2px; }
+.tab-live-badge {
+    font-size: 0.7em; background: rgba(255, 0, 0, 0.4); color: #ff4444;
+    padding: 1px 5px; border-radius: 2px; margin-left: 4px;
+    animation: livePulse 2s ease-in-out infinite;
+}
 
 /* === TOASTS === */
 #toast-container { position: fixed; top: 60px; right: 20px; z-index: 9000; display: flex; flex-direction: column; gap: 8px; }
@@ -309,7 +334,9 @@ button:active:not(:disabled) { transform: scale(0.98); }
     #adminSection .border-frame { display: none; }
     .form-row { grid-template-columns: 1fr; }
     h3 { font-size: 1.6em; }
-    #timer-banner { font-size: 0.85em; padding: 10px; }
+    #timer-banner { font-size: 0.85em; flex-direction: column; height: auto; padding: 6px 10px; }
+    .banner-tabs { position: static; justify-content: center; margin-bottom: 4px; }
+    .banner-tab { font-size: 0.7em; padding: 4px 10px; }
     #toast-container { right: 10px; left: 10px; }
     .toast { max-width: 100%; }
     #twitchTop { grid-template-columns: 1fr; }
