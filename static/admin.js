@@ -49,7 +49,10 @@ const Admin = {
                 const r = await API.adminArchive(pw);
                 UI.toast(r.message || "Archived & reset");
                 this.log(r.message);
+                TabManager.refreshAttendance();
             }
+            // Any successful admin action unlocks the attendance tab
+            TabManager.unlockAttendanceTab();
             App.refreshRoster();
         } catch (err) { UI.toast(err.message, "error"); this.log("ERROR: " + err.message); }
     },
@@ -83,6 +86,7 @@ const DragDrop = {
         try {
             await API.adminVerify(pw);
             this.enable(); UI.toast("Drag & drop enabled");
+            TabManager.unlockAttendanceTab();
         } catch (err) { UI.toast(err.message, "error"); btn.textContent = "Enable Drag & Drop"; }
     },
     enable() {

@@ -360,6 +360,61 @@ button:active:not(:disabled) { transform: scale(0.98); }
 }
 .twitch-fallback:hover { color: #fff; }
 
+/* === ATTENDANCE TABLE === */
+.attendance-list {
+    margin-top: 15px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.attendance-header {
+    display: grid;
+    grid-template-columns: 50px 1fr 80px 120px;
+    padding: 10px 12px;
+    background: rgba(255, 209, 0, 0.08);
+    border-bottom: 2px solid rgba(255, 209, 0, 0.2);
+    font-family: 'Cinzel', serif;
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--wow-gold);
+}
+.attendance-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 80px 120px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    transition: background 0.2s;
+    align-items: center;
+}
+.attendance-row:hover { background: rgba(255,255,255,0.03); }
+.att-rank {
+    text-align: center; font-weight: bold;
+}
+.att-rank.gold { color: #ffd700; text-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+.att-rank.silver { color: #c0c0c0; text-shadow: 0 0 6px rgba(192, 192, 192, 0.3); }
+.att-rank.bronze { color: #cd7f32; text-shadow: 0 0 6px rgba(205, 127, 50, 0.3); }
+.att-name { color: #e0e0e0; }
+.att-count {
+    text-align: center;
+    color: #5ab0ff;
+    font-weight: bold;
+}
+.att-last {
+    text-align: right;
+    color: #888;
+    font-size: 0.85em;
+    font-family: 'Lato', sans-serif;
+}
+.attendance-summary {
+    text-align: center; padding: 12px;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8em; color: #666;
+    border-top: 1px solid #333;
+}
+
 /* === DRAG === */
 .player[draggable="true"] { cursor: grab; }
 .player[draggable="true"]:active { cursor: grabbing; }

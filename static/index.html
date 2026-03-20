@@ -14,8 +14,9 @@
 <div id="particles"></div>
 <div id="timer-banner">
     <div class="banner-tabs">
-        <button class="banner-tab active" id="tabSignups" onclick="TwitchManager.switchTab('signups')">Signups</button>
-        <button class="banner-tab" id="tabStreams" onclick="TwitchManager.switchTab('streams')">Streams</button>
+        <button class="banner-tab active" id="tabSignups" onclick="TabManager.switchTab('signups')">Signups</button>
+        <button class="banner-tab" id="tabStreams" onclick="TabManager.switchTab('streams')">Streams</button>
+        <button class="banner-tab" id="tabAttendance" onclick="TabManager.switchTab('attendance')" style="display:none;">Attendance</button>
     </div>
     <div class="banner-timer" id="timerText">Loading...</div>
 </div>
@@ -46,6 +47,12 @@
             <div id="twitchTop" class="twitch-row"></div>
             <div id="twitchBottom" class="twitch-row"></div>
         </div>
+
+        <!-- ATTENDANCE TAB (admin only) -->
+        <div id="attendanceTabContent" style="display:none;">
+            <h3>Attendance Tracker</h3>
+            <div id="attendanceTable"></div>
+        </div>
     </div>
 </div>
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
@@ -56,6 +63,7 @@
 <script src="/static/sorting.js"></script>
 <script src="/static/admin.js"></script>
 <script src="/static/twitch.js"></script>
+<script src="/static/tabs.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
