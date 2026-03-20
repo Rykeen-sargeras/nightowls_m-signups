@@ -1,6 +1,7 @@
 // ============================================
-// TWITCH — Tab-based streams view with interactive embeds
-// Embeds load lazily when the Streams tab is first opened
+// TWITCH — Tab-based streams view
+// NO DOM reordering — iframes reload when moved, causing flashing
+// Instead: render once, update badges only
 // ============================================
 const TwitchManager = {
     players: {},
@@ -9,7 +10,6 @@ const TwitchManager = {
     activeTab: "signups",
 
     init() {
-        // Don't create embeds yet — wait until user clicks Streams tab
         Admin.log("Twitch manager ready (streams load on tab click)");
     },
 
@@ -25,8 +25,6 @@ const TwitchManager = {
             streamsContent.style.display = "block";
             tabSignups.classList.remove("active");
             tabStreams.classList.add("active");
-
-            // Load embeds on first open
             if (!this.initialized) {
                 this._loadEmbeds();
                 this.initialized = true;
@@ -64,19 +62,17 @@ const TwitchManager = {
             const wrapper = document.createElement("div");
             wrapper.className = "twitch-embed-wrapper";
             wrapper.id = `twitch-wrap-${ch.username}`;
-            wrapper.dataset.username = ch.username;
-            wrapper.dataset.priority = ch.priority ? "true" : "false";
 
             // Label
             const label = document.createElement("div");
             label.className = "twitch-label";
             label.innerHTML = `
                 <a href="https://twitch.tv/${ch.username}" target="_blank" class="twitch-name">${ch.display}</a>
-                <span class="twitch-status" id="status-${ch.username}">Loading...</span>
+                <span class="twitch-status offline" id="status-${ch.username}">Offline</span>
             `;
             wrapper.appendChild(label);
 
-            // Player
+            // Player container
             const playerDiv = document.createElement("div");
             playerDiv.className = "twitch-player";
             const embedTarget = document.createElement("div");
@@ -87,7 +83,7 @@ const TwitchManager = {
             wrapper.appendChild(playerDiv);
             container.appendChild(wrapper);
 
-            // Create player
+            // Create Twitch.Player — render once, never move
             try {
                 const player = new Twitch.Player(`twitch-player-${ch.username}`, {
                     width: "100%",
@@ -102,27 +98,26 @@ const TwitchManager = {
                 this.liveStatus[ch.username] = false;
 
                 player.addEventListener(Twitch.Player.ONLINE, () => {
-                    Admin.log(`${ch.display} is LIVE!`);
-                    this.liveStatus[ch.username] = true;
-                    this._updateBadge(ch.username, true);
-                    this._updateStreamsTabBadge();
-                    this._reorderByLiveStatus();
+                    if (!this.liveStatus[ch.username]) {
+                        Admin.log(`${ch.display} is LIVE!`);
+                        this.liveStatus[ch.username] = true;
+                        this._updateBadge(ch.username, true);
+                        this._updateStreamsTabBadge();
+                    }
                 });
 
                 player.addEventListener(Twitch.Player.OFFLINE, () => {
-                    this.liveStatus[ch.username] = false;
-                    this._updateBadge(ch.username, false);
-                    this._updateStreamsTabBadge();
-                    this._reorderByLiveStatus();
+                    if (this.liveStatus[ch.username]) {
+                        Admin.log(`${ch.display} went offline`);
+                        this.liveStatus[ch.username] = false;
+                        this._updateBadge(ch.username, false);
+                        this._updateStreamsTabBadge();
+                    }
                 });
 
-                player.addEventListener(Twitch.Player.READY, () => {
-                    Admin.log(`${ch.display} player ready`);
-                });
             } catch (e) {
                 Admin.log(`Twitch error (${ch.display}): ${e.message}`);
                 embedTarget.innerHTML = `<a href="https://twitch.tv/${ch.username}" target="_blank" class="twitch-fallback">Watch ${ch.display} on Twitch</a>`;
-                this._updateBadge(ch.username, false);
             }
         });
     },
@@ -147,36 +142,5 @@ const TwitchManager = {
         } else {
             tabBtn.textContent = "Streams";
         }
-    },
-
-    _reorderByLiveStatus() {
-        const channels = CONFIG.TWITCH_CHANNELS;
-        const topContainer = document.getElementById("twitchTop");
-        const bottomContainer = document.getElementById("twitchBottom");
-        if (!topContainer || !bottomContainer) return;
-
-        const live = channels.filter(c => this.liveStatus[c.username]);
-        const offline = channels.filter(c => !this.liveStatus[c.username]);
-
-        const priorityLive = live.filter(c => c.priority);
-        const otherLive = live.filter(c => !c.priority);
-        const priorityOffline = offline.filter(c => c.priority);
-
-        let topChannels = [...priorityLive];
-        if (topChannels.length < 2) topChannels.push(...otherLive.splice(0, 2 - topChannels.length));
-        if (topChannels.length < 2) topChannels.push(...priorityOffline.splice(0, 2 - topChannels.length));
-
-        const topUsernames = new Set(topChannels.map(c => c.username));
-        let bottomChannels = channels.filter(c => !topUsernames.has(c.username));
-        bottomChannels.sort((a, b) => (this.liveStatus[b.username] ? 1 : 0) - (this.liveStatus[a.username] ? 1 : 0));
-
-        topChannels.forEach(ch => {
-            const w = document.getElementById(`twitch-wrap-${ch.username}`);
-            if (w) topContainer.appendChild(w);
-        });
-        bottomChannels.forEach(ch => {
-            const w = document.getElementById(`twitch-wrap-${ch.username}`);
-            if (w) bottomContainer.appendChild(w);
-        });
     },
 };
