@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.database import get_db
-from app.models.models import Player, EventState
+from app.models.models import Player, EventState, ArchivedPlayer
 from app.models.schemas import (
     SignupRequest, SignupResponse, PlayerOut, RosterResponse,
     ClassSpecResponse, VALID_SPECS, get_specs_for_class
@@ -14,6 +14,30 @@ router = APIRouter()
 @router.get("/specs", response_model=ClassSpecResponse)
 async def get_class_specs():
     return ClassSpecResponse(classes=VALID_SPECS)
+
+
+@router.get("/attendance")
+async def get_attendance(db: AsyncSession = Depends(get_db)):
+    """Get attendance counts from archived events per player."""
+    result = await db.execute(
+        select(
+            ArchivedPlayer.username,
+            func.count(ArchivedPlayer.id).label("events"),
+            func.max(ArchivedPlayer.event_date).label("last_event"),
+        ).group_by(ArchivedPlayer.username)
+        .order_by(func.count(ArchivedPlayer.id).desc())
+    )
+    rows = result.all()
+    return {
+        "attendance": [
+            {
+                "username": row.username,
+                "events": row.events,
+                "last_event": row.last_event.isoformat() if row.last_event else None,
+            }
+            for row in rows
+        ]
+    }
 
 
 @router.get("/roster", response_model=RosterResponse)

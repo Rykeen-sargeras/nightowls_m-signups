@@ -2,6 +2,7 @@ const App = {
     players: [],
     isLocked: false,
     pollTimer: null,
+    attendanceMap: {},
 
     async init() {
         UI.initParticles();
@@ -15,6 +16,17 @@ const App = {
             Admin.log("ERROR loading specs: " + err.message);
             UI.toast("Could not connect to server", "error");
             return;
+        }
+
+        // Load attendance data
+        try {
+            const attData = await API.fetchAttendance();
+            attData.attendance.forEach(a => {
+                this.attendanceMap[a.username.toLowerCase()] = a;
+            });
+            Admin.log(`Loaded attendance for ${attData.attendance.length} players`);
+        } catch (err) {
+            Admin.log("Attendance load skipped: " + err.message);
         }
 
         UI.renderSignupForm();

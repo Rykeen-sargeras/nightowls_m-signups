@@ -102,7 +102,27 @@ const UI = {
         const tanks = players.filter(p => p.role === "Tank");
         const healers = players.filter(p => p.role === "Healer");
         const dps = players.filter(p => p.role === "Melee" || p.role === "Ranged");
+
+        // Group estimate and role needs
+        const possibleGroups = Math.min(tanks.length, healers.length, Math.floor(dps.length / 3));
+        const totalPlayers = players.length;
+
+        let needsHtml = "";
+        const needs = [];
+        if (tanks.length < healers.length || tanks.length < Math.floor(dps.length / 3)) needs.push("Tanks");
+        if (healers.length < tanks.length || healers.length < Math.floor(dps.length / 3)) needs.push("Healers");
+        if (dps.length < 3 && tanks.length > 0 && healers.length > 0) needs.push("DPS");
+
+        if (totalPlayers > 0 && needs.length > 0) {
+            needsHtml = `<div class="role-needs">We need more <strong>${needs.join(" & ")}</strong> to form more groups!</div>`;
+        }
+
+        const summaryHtml = totalPlayers > 0
+            ? `<div class="group-estimate">${totalPlayers} players signed up — Can form <strong>${possibleGroups}</strong> group${possibleGroups !== 1 ? 's' : ''}${possibleGroups > 0 ? '' : ' yet'}</div>`
+            : '';
+
         rv.innerHTML = `
+            <div style="grid-column: 1 / -1;">${summaryHtml}${needsHtml}</div>
             <div class="roster-col"><h4 style="color:${ROLE_COLORS.Tank}">TANKS</h4><div class="count">${tanks.length} signed up</div><div id="tankList"></div></div>
             <div class="roster-col"><h4 style="color:${ROLE_COLORS.Healer}">HEALERS</h4><div class="count">${healers.length} signed up</div><div id="healList"></div></div>
             <div class="roster-col"><h4 style="color:#ABD473">DPS</h4><div class="count">${dps.length} signed up</div><div id="dpsList"></div></div>
@@ -176,7 +196,12 @@ const UI = {
         const div = document.createElement("div"); div.className = "player";
         div.dataset.role = p.role; div.dataset.cls = cls;
         div.dataset.username = p.username; div.dataset.spec = p.specialization || "";
-        div.innerHTML = `<span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}</span><span class="player-spec">${p.specialization || cls}</span>`;
+
+        // Check attendance data
+        const attendance = App.attendanceMap ? App.attendanceMap[p.username.toLowerCase()] : null;
+        const attendBadge = attendance ? `<span class="attendance-badge" title="${attendance.events} events attended">${attendance.events}x</span>` : '';
+
+        div.innerHTML = `<span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span><span class="player-spec">${p.specialization || cls}</span>`;
         return div;
     },
 
