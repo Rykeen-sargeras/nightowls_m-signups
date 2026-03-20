@@ -23,6 +23,11 @@ app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# Health check (Koyeb pings this to verify the app is alive)
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Serve index.html at root
 @app.get("/")
 async def serve_index():
