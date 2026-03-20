@@ -19,6 +19,7 @@ const App = {
 
         UI.renderSignupForm();
         Admin.init();
+        TwitchManager.init();
         await this.refreshRoster();
         this.pollTimer = setInterval(() => this.refreshRoster(), CONFIG.POLL_INTERVAL);
     },
