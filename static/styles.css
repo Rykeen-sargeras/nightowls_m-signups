@@ -55,19 +55,20 @@ body {
     display: flex; align-items: center; gap: 6px;
 }
 .banner-tab {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    color: #aaa !important;
+    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%) !important;
+    border: 1px solid #2a6aaa !important;
+    color: #8ac4ff !important;
     font-family: 'Cinzel', serif; font-size: 0.8em;
     padding: 8px 18px; cursor: pointer; letter-spacing: 0.8px;
     text-transform: uppercase; transition: all 0.2s;
     border-radius: 4px; width: auto; margin: 0;
-    box-shadow: none !important; text-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0,80,180,0.2) !important; text-shadow: 1px 1px 0 #000 !important;
 }
 .banner-tab:hover {
     color: #fff !important;
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    background: linear-gradient(180deg, #245090 0%, #1a3a60 100%) !important;
+    border-color: #4a9aee !important;
+    box-shadow: 0 0 15px rgba(40,120,220,0.3) !important;
 }
 .banner-tab.active {
     color: #fff !important;
@@ -182,13 +183,13 @@ button:disabled { background: #222; border-color: #444; color: #555; cursor: not
 button:active:not(:disabled) { transform: scale(0.98); }
 .btn-sm { font-size: 0.85em; padding: 10px 14px; margin-top: 0; font-family: 'Cinzel', serif; letter-spacing: 0.5px; }
 .btn-secondary {
-    background: linear-gradient(180deg, #3a3a50 0%, #2a2a3a 100%);
-    border-color: var(--wow-border); color: #ddd;
+    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%);
+    border-color: #2a6aaa; color: #8ac4ff;
 }
 .btn-secondary:hover {
-    background: linear-gradient(180deg, #4a4a60 0%, #3a3a4a 100%);
-    color: #fff; border-color: var(--wow-gold);
-    box-shadow: 0 0 15px rgba(255, 209, 0, 0.15);
+    background: linear-gradient(180deg, #245090 0%, #1a3a60 100%);
+    color: #fff; border-color: #4a9aee;
+    box-shadow: 0 0 15px rgba(40,120,220,0.3);
 }
 .btn-success { background: linear-gradient(180deg, #1a6b1a 0%, #0d4d0d 100%); border-color: #4CAF50; color: #fff; }
 .btn-success:hover { background: linear-gradient(180deg, #228B22 0%, #166616 100%); box-shadow: 0 0 20px rgba(76,175,80,0.3); }
