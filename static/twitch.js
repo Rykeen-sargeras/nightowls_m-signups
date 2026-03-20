@@ -19,12 +19,14 @@ const TwitchManager = {
         const streamsContent = document.getElementById("streamsTabContent");
         const tabSignups = document.getElementById("tabSignups");
         const tabStreams = document.getElementById("tabStreams");
+        const container = document.querySelector(".container");
 
         if (tab === "streams") {
             signupsContent.style.display = "none";
             streamsContent.style.display = "block";
             tabSignups.classList.remove("active");
             tabStreams.classList.add("active");
+            container.classList.add("wide");
             if (!this.initialized) {
                 this._loadEmbeds();
                 this.initialized = true;
@@ -34,6 +36,7 @@ const TwitchManager = {
             streamsContent.style.display = "none";
             tabSignups.classList.add("active");
             tabStreams.classList.remove("active");
+            container.classList.remove("wide");
         }
     },
 

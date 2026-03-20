@@ -52,20 +52,29 @@ body {
 #timer-banner a { color: #fff; text-decoration: underline; }
 .banner-tabs {
     position: absolute; left: 16px; top: 0; height: 100%;
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 6px;
 }
 .banner-tab {
-    background: transparent; border: none; color: #888;
-    font-family: 'Cinzel', serif; font-size: 0.75em;
-    padding: 6px 14px; cursor: pointer; letter-spacing: 0.5px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #aaa !important;
+    font-family: 'Cinzel', serif; font-size: 0.8em;
+    padding: 8px 18px; cursor: pointer; letter-spacing: 0.8px;
     text-transform: uppercase; transition: all 0.2s;
-    border-radius: 3px; width: auto; margin: 0;
-    box-shadow: none; text-shadow: none;
+    border-radius: 4px; width: auto; margin: 0;
+    box-shadow: none !important; text-shadow: none !important;
 }
-.banner-tab:hover { color: #ccc; background: rgba(255,255,255,0.05); }
+.banner-tab:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
 .banner-tab.active {
-    color: var(--wow-gold); background: rgba(255, 209, 0, 0.1);
-    border: 1px solid rgba(255, 209, 0, 0.3);
+    color: #fff !important;
+    background: linear-gradient(180deg, #8b0000 0%, #590000 100%) !important;
+    border: 2px solid var(--wow-gold) !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    box-shadow: 0 0 10px rgba(255, 69, 0, 0.25) !important;
 }
 .banner-timer { text-align: center; }
 .banner-timer .timer-digits { display: inline-block; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
@@ -95,8 +104,9 @@ body {
     max-width: 960px; min-height: 500px; margin: 140px auto 80px auto;
     position: relative; background: rgba(20, 20, 40, 0.98);
     border-radius: 20px; box-shadow: 0 0 80px rgba(0,0,0,1); padding-bottom: 40px;
-    overflow: hidden;
+    overflow: hidden; transition: max-width 0.3s;
 }
+.container.wide { max-width: 1200px; }
 
 .border-frame {
     position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
@@ -171,8 +181,15 @@ button:hover, .btn:hover {
 button:disabled { background: #222; border-color: #444; color: #555; cursor: not-allowed; box-shadow: none; }
 button:active:not(:disabled) { transform: scale(0.98); }
 .btn-sm { font-size: 0.85em; padding: 10px 14px; margin-top: 0; font-family: 'Cinzel', serif; letter-spacing: 0.5px; }
-.btn-secondary { background: linear-gradient(180deg, #333 0%, #222 100%); border-color: #666; color: #aaa; }
-.btn-secondary:hover { background: linear-gradient(180deg, #444 0%, #333 100%); color: #ccc; }
+.btn-secondary {
+    background: linear-gradient(180deg, #3a3a50 0%, #2a2a3a 100%);
+    border-color: var(--wow-border); color: #ddd;
+}
+.btn-secondary:hover {
+    background: linear-gradient(180deg, #4a4a60 0%, #3a3a4a 100%);
+    color: #fff; border-color: var(--wow-gold);
+    box-shadow: 0 0 15px rgba(255, 209, 0, 0.15);
+}
 .btn-success { background: linear-gradient(180deg, #1a6b1a 0%, #0d4d0d 100%); border-color: #4CAF50; color: #fff; }
 .btn-success:hover { background: linear-gradient(180deg, #228B22 0%, #166616 100%); box-shadow: 0 0 20px rgba(76,175,80,0.3); }
 
@@ -241,7 +258,9 @@ button:active:not(:disabled) { transform: scale(0.98); }
     margin: 20px 0;
 }
 #twitchTop { grid-template-columns: 1fr 1fr; }
-#twitchBottom { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+#twitchTop .twitch-player { padding-bottom: 56.25%; } /* Full 16:9 for priority streams */
+#twitchBottom { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+#twitchBottom .twitch-player { padding-bottom: 56.25%; }
 
 .twitch-embed-wrapper {
     border: 1px solid rgba(145, 70, 255, 0.3);
