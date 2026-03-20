@@ -1,0 +1,317 @@
+:root {
+    --wow-gold: #ffd100;
+    --wow-border: #b39352;
+    --glass-bg: rgba(10, 10, 15, 0.95);
+    --deep-black: #050510;
+    --toast-success: rgba(34, 139, 34, 0.9);
+    --toast-error: rgba(139, 34, 34, 0.9);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0; font-family: 'Lato', sans-serif;
+    color: #e0e0e0; background-color: var(--deep-black);
+    overflow-x: hidden; min-height: 100vh;
+}
+
+/* === BACKGROUND === */
+#bg-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -2;
+    background-image: url('/static/bg.png');
+    background-size: cover; background-position: center; background-repeat: no-repeat;
+}
+
+/* === PARTICLES === */
+#particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.particle {
+    position: fixed; top: -10px;
+    background: radial-gradient(circle, rgba(100, 180, 255, 0.9) 0%, rgba(100, 180, 255, 0) 70%);
+    border-radius: 50%; opacity: 0; pointer-events: none;
+    animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+    0%   { transform: translateY(100vh) translateX(0) scale(0.3); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.6; }
+    100% { transform: translateY(-20vh) translateX(var(--drift, 30px)) scale(1); opacity: 0; }
+}
+
+/* === TIMER BANNER === */
+#timer-banner {
+    text-align: center; background: rgba(0, 0, 0, 0.92);
+    border-bottom: 2px solid var(--wow-gold);
+    padding: 14px 20px; font-family: 'Cinzel', serif; font-size: 1.05em;
+    color: var(--wow-gold); position: fixed; top: 0; width: 100%;
+    z-index: 3000; backdrop-filter: blur(6px);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.6); letter-spacing: 0.5px;
+}
+#timer-banner a { color: #fff; text-decoration: underline; }
+#timer-banner .timer-digits { display: inline-block; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+#timer-banner .timer-sep { opacity: 0.5; margin: 0 2px; }
+
+/* === TOASTS === */
+#toast-container { position: fixed; top: 60px; right: 20px; z-index: 9000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+    padding: 14px 22px; border-radius: 4px; font-family: 'Cinzel', serif;
+    font-size: 0.9em; letter-spacing: 0.5px; color: #fff;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px); animation: toastIn 0.35s ease-out forwards; max-width: 340px;
+}
+.toast.success { background: var(--toast-success); border-left: 3px solid #4CAF50; }
+.toast.error   { background: var(--toast-error); border-left: 3px solid #ff4444; }
+.toast.removing { animation: toastOut 0.3s ease-in forwards; }
+@keyframes toastIn  { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+/* === MAIN CONTAINER === */
+.container {
+    max-width: 960px; min-height: 500px; margin: 140px auto 80px auto;
+    position: relative; background: rgba(20, 20, 40, 0.98);
+    border-radius: 20px; box-shadow: 0 0 80px rgba(0,0,0,1); padding-bottom: 40px;
+    overflow: hidden;
+}
+
+.border-frame {
+    position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
+    background-image: url('/static/border.png');
+    background-size: 100% 100%; background-repeat: no-repeat;
+    pointer-events: none; z-index: 100;
+}
+
+.content-wrapper { padding: 50px 60px; position: relative; z-index: 200; }
+.logo-container { width: 100%; text-align: center; margin-bottom: 20px; }
+.logo-container img { max-width: 90%; height: auto; filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); }
+
+/* === TYPOGRAPHY === */
+h3 {
+    font-family: 'MedievalSharp', cursive; font-size: 2.2em;
+    color: var(--wow-gold); text-align: center; margin-top: 0;
+    text-shadow: 2px 2px 0px #000, 0 0 20px rgba(255, 209, 0, 0.15);
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2); padding-bottom: 10px;
+}
+h4 { font-family: 'Cinzel', serif; letter-spacing: 1px; }
+
+/* === SIGNUP FORM === */
+.form-group { margin-bottom: 12px; }
+.form-group label {
+    display: block; font-family: 'Cinzel', serif; font-size: 0.8em;
+    color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.derived-role {
+    text-align: center; padding: 10px; margin: 8px 0;
+    font-family: 'Cinzel', serif; font-size: 0.95em; letter-spacing: 1px;
+    border-radius: 3px; background: rgba(255, 209, 0, 0.05);
+    border: 1px solid rgba(255, 209, 0, 0.15); min-height: 42px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+}
+.derived-role.tank   { color: #C79C6E; border-color: rgba(199,156,110,0.3); }
+.derived-role.healer { color: #F58CBA; border-color: rgba(245,140,186,0.3); }
+.derived-role.melee  { color: #C41F3B; border-color: rgba(196,31,59,0.3); }
+.derived-role.ranged { color: #40C7EB; border-color: rgba(64,199,235,0.3); }
+
+input, select {
+    margin: 0; padding: 14px; width: 100%;
+    border: 1px solid #444; background: rgba(0, 0, 0, 0.5); color: #fff;
+    font-family: 'Cinzel', serif; font-size: 15px; border-radius: 3px;
+    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    appearance: none; -webkit-appearance: none;
+}
+select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer;
+}
+select option { background: #1a1a2e; color: #fff; }
+input:focus, select:focus {
+    border-color: var(--wow-gold); background: rgba(0, 0, 0, 0.8); outline: none;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
+}
+
+/* === BUTTONS === */
+button, .btn {
+    background: linear-gradient(180deg, #8b0000 0%, #590000 100%);
+    border: 2px solid var(--wow-gold); color: var(--wow-gold);
+    padding: 15px; width: 100%; font-family: 'MedievalSharp', cursive;
+    font-size: 1.35em; cursor: pointer; text-transform: uppercase;
+    margin-top: 12px; text-shadow: 1px 1px 0 #000; transition: all 0.2s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius: 3px; letter-spacing: 1px;
+}
+button:hover, .btn:hover {
+    background: linear-gradient(180deg, #a30000 0%, #700000 100%);
+    color: #fff; box-shadow: 0 0 25px rgba(255, 69, 0, 0.35);
+}
+button:disabled { background: #222; border-color: #444; color: #555; cursor: not-allowed; box-shadow: none; }
+button:active:not(:disabled) { transform: scale(0.98); }
+.btn-sm { font-size: 0.85em; padding: 10px 14px; margin-top: 0; font-family: 'Cinzel', serif; letter-spacing: 0.5px; }
+.btn-secondary { background: linear-gradient(180deg, #333 0%, #222 100%); border-color: #666; color: #aaa; }
+.btn-secondary:hover { background: linear-gradient(180deg, #444 0%, #333 100%); color: #ccc; }
+.btn-success { background: linear-gradient(180deg, #1a6b1a 0%, #0d4d0d 100%); border-color: #4CAF50; color: #fff; }
+.btn-success:hover { background: linear-gradient(180deg, #228B22 0%, #166616 100%); box-shadow: 0 0 20px rgba(76,175,80,0.3); }
+
+/* === ROSTER === */
+.roster-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 30px; }
+.roster-col { background: rgba(255, 255, 255, 0.03); border: 1px solid #333; padding: 12px; border-radius: 4px; }
+.roster-col h4 { text-align: center; margin: 0 0 10px 0; border-bottom: 2px solid #444; padding-bottom: 8px; text-shadow: 1px 1px 0 #000; font-size: 0.95em; }
+.roster-col .count { text-align: center; font-size: 0.75em; color: #666; margin-bottom: 8px; font-family: 'Lato', sans-serif; }
+
+/* === GROUPS === */
+#groupView { display: none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
+.dungeon-group {
+    background: linear-gradient(180deg, rgba(30,30,45,0.9), rgba(20,20,30,0.95));
+    padding: 16px; border: 1px solid var(--wow-border);
+    box-shadow: inset 0 0 25px rgba(0,0,0,0.8); border-radius: 4px;
+    border-top: 3px solid var(--wow-gold); transition: transform 0.2s, border-color 0.2s;
+}
+.dungeon-group h4 { text-align: center; margin: 0 0 8px 0; font-size: 1em; text-shadow: 1px 1px 0 #000; }
+.group-badges { text-align: center; margin-bottom: 8px; display: flex; gap: 6px; justify-content: center; }
+.badge { font-size: 0.65em; padding: 2px 8px; border-radius: 2px; font-family: 'Cinzel', serif; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-lust { background: rgba(0, 112, 222, 0.3); color: #5ab0ff; border: 1px solid rgba(0,112,222,0.4); }
+.badge-brez { background: rgba(76, 175, 80, 0.3); color: #81c784; border: 1px solid rgba(76,175,80,0.4); }
+.badge-missing { background: rgba(255, 68, 68, 0.2); color: #ff6b6b; border: 1px solid rgba(255,68,68,0.3); }
+.role-header { font-size: 0.7em; text-transform: uppercase; color: #666; margin-top: 10px; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Cinzel', serif; letter-spacing: 1px; }
+
+/* === PLAYERS === */
+.player { padding: 7px 5px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel', serif; letter-spacing: 0.5px; font-size: 0.9em; transition: background 0.2s; }
+.player:hover { background: rgba(255,255,255,0.03); }
+.player-name { font-weight: bold; text-shadow: 1px 1px 0 #000; }
+.player-spec { font-size: 0.7em; opacity: 0.55; text-transform: uppercase; font-family: 'Lato', sans-serif; }
+
+/* === LOCKED === */
+#lockedMessage { display: none; text-align: center; padding: 16px; background: rgba(100, 20, 20, 0.35); border: 1px solid rgba(255, 68, 68, 0.4); border-radius: 4px; margin-bottom: 20px; }
+#lockedMessage h3 { margin: 0; color: #ff6a6a; border: none; font-family: 'Cinzel', serif; font-size: 1.1em; }
+
+/* === ADMIN === */
+#adminToggle {
+    position: fixed; top: 50px; right: 20px; width: 90px; height: 90px;
+    background-color: transparent; background-image: url('/static/admin.png');
+    background-size: contain; background-repeat: no-repeat; background-position: center;
+    border: none; cursor: pointer; z-index: 6000; transition: transform 0.2s;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+#adminToggle:hover { transform: scale(1.08); }
+#adminSection {
+    display: none; position: fixed; top: 140px; right: 40px; width: 340px;
+    background: rgba(15, 15, 30, 0.98); z-index: 5000; padding: 25px;
+    border-radius: 6px; border: 2px solid var(--wow-gold);
+    box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+    max-height: calc(100vh - 180px); overflow-y: auto;
+}
+.admin-inner { position: relative; }
+.admin-inner h3 { font-size: 1.6em; margin-bottom: 15px; }
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+#debug-console {
+    width: 100%; margin-top: 15px; background: rgba(0,0,0,0.8); color: #0f0;
+    font-family: 'Courier New', monospace; padding: 10px; border: 1px solid #222;
+    height: 140px; overflow-y: scroll; font-size: 11px; white-space: pre-wrap;
+    border-radius: 3px; line-height: 1.4;
+}
+
+/* === TWITCH EMBEDS === */
+.twitch-row {
+    display: grid;
+    gap: 15px;
+    margin: 20px 0;
+}
+#twitchTop { grid-template-columns: 1fr 1fr; }
+#twitchBottom { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+.twitch-embed-wrapper {
+    border: 1px solid rgba(145, 70, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.twitch-embed-wrapper:hover {
+    border-color: rgba(145, 70, 255, 0.6);
+    box-shadow: 0 0 15px rgba(145, 70, 255, 0.15);
+}
+
+.twitch-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(145, 70, 255, 0.1);
+    border-bottom: 1px solid rgba(145, 70, 255, 0.2);
+}
+.twitch-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    color: #bf94ff;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+.twitch-status {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.65em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 2px;
+}
+.twitch-status.live {
+    background: rgba(255, 0, 0, 0.3);
+    color: #ff4444;
+    border: 1px solid rgba(255, 0, 0, 0.4);
+    animation: livePulse 2s ease-in-out infinite;
+}
+.twitch-status.offline {
+    background: rgba(100, 100, 100, 0.2);
+    color: #666;
+    border: 1px solid rgba(100, 100, 100, 0.3);
+}
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.twitch-player {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+}
+.twitch-player iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+.twitch-fallback {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: #bf94ff; text-decoration: none;
+    font-family: 'Cinzel', serif; font-size: 0.9em;
+    background: rgba(0, 0, 0, 0.6);
+}
+.twitch-fallback:hover { color: #fff; }
+
+/* === DRAG === */
+.player[draggable="true"] { cursor: grab; }
+.player[draggable="true"]:active { cursor: grabbing; }
+.player.dragging { opacity: 0.4; background: rgba(255, 215, 0, 0.15); border: 1px dashed var(--wow-gold); border-radius: 3px; }
+.dungeon-group.drag-over { border: 2px dashed rgba(255, 215, 0, 0.6); background: rgba(255, 255, 255, 0.06); transform: scale(1.015); }
+
+/* === RESPONSIVE === */
+@media (max-width: 700px) {
+    .container { margin: 100px 8px 40px 8px; width: auto; }
+    .content-wrapper { padding: 30px 20px; }
+    .roster-grid { grid-template-columns: 1fr; }
+    #groupView { grid-template-columns: 1fr; }
+    .border-frame { display: none; }
+    .container { border: 2px solid var(--wow-border); border-radius: 12px; }
+    #adminToggle { width: 55px; height: 55px; top: 50px; right: 10px; }
+    #adminSection { top: 105px; right: 8px; left: 8px; width: auto; padding: 20px; border: 2px solid var(--wow-gold); border-radius: 8px; }
+    #adminSection .border-frame { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    h3 { font-size: 1.6em; }
+    #timer-banner { font-size: 0.85em; padding: 10px; }
+    #toast-container { right: 10px; left: 10px; }
+    .toast { max-width: 100%; }
+    #twitchTop { grid-template-columns: 1fr; }
+    #twitchBottom { grid-template-columns: 1fr; }
+}
