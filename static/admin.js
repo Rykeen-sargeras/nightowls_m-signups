@@ -18,6 +18,7 @@ const Admin = {
                 <button class="btn btn-sm btn-success" id="btnSave">Save Groups</button>
             </div>
             <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
+            <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show Attendance Tab</button>
             <div id="debug-console">Waiting for logs...</div>
         `;
         document.getElementById("btnArchive").addEventListener("click", () => this.action("archive"));
@@ -25,6 +26,7 @@ const Admin = {
         document.getElementById("btnUnlock").addEventListener("click", () => this.action("unlock"));
         document.getElementById("btnSave").addEventListener("click", () => this.saveGroups());
         document.getElementById("btnDrag").addEventListener("click", () => DragDrop.toggle());
+        document.getElementById("btnAttendance").addEventListener("click", () => this.showAttendance());
     },
     getPassword() { return document.getElementById("adminPassword")?.value || ""; },
     async action(type) {
@@ -73,6 +75,20 @@ const Admin = {
     log(msg) {
         const el = document.getElementById("debug-console");
         if (el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.innerHTML;
+    },
+    async showAttendance() {
+        const pw = this.getPassword();
+        if (!pw) return UI.toast("Enter admin password", "error");
+        try {
+            await API.adminVerify(pw);
+            TabManager.unlockAttendanceTab();
+            TabManager.switchTab("attendance");
+            UI.toast("Attendance tab unlocked");
+            this.log("Attendance tab shown");
+        } catch (err) {
+            UI.toast(err.message, "error");
+            this.log("ERROR: " + err.message);
+        }
     },
 };
 

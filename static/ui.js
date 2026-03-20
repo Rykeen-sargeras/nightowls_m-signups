@@ -201,7 +201,13 @@ const UI = {
         const attendance = App.attendanceMap ? App.attendanceMap[p.username.toLowerCase()] : null;
         const attendBadge = attendance ? `<span class="attendance-badge" title="${attendance.events} events attended">${attendance.events}x</span>` : '';
 
-        div.innerHTML = `<span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span><span class="player-spec">${p.specialization || cls}</span>`;
+        div.innerHTML = `
+            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span>
+            <span class="player-right">
+                <span class="player-spec">${p.specialization || cls}</span>
+                <button class="player-remove" onclick="App.removePlayer('${p.username.replace(/'/g, "\\'")}')" title="Remove ${p.username}">&times;</button>
+            </span>
+        `;
         return div;
     },
 

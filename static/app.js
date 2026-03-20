@@ -93,6 +93,17 @@ const App = {
             btn.disabled = false; btn.textContent = "Sign Up For Glory";
         }
     },
+
+    async removePlayer(username) {
+        if (!confirm(`Remove ${username} from signups?`)) return;
+        try {
+            const result = await API.cancelSignup(username);
+            UI.toast(result.message);
+            await this.refreshRoster();
+        } catch (err) {
+            UI.toast(err.message, "error");
+        }
+    },
 };
 
 document.addEventListener("DOMContentLoaded", () => App.init());
