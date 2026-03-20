@@ -95,11 +95,32 @@ const App = {
     },
 
     async removePlayer(username) {
+        if (!TabManager.adminVerified) {
+            UI.toast("Admin access required — enter password in admin panel first", "error");
+            return;
+        }
         if (!confirm(`Remove ${username} from signups?`)) return;
         try {
             const result = await API.cancelSignup(username);
             UI.toast(result.message);
             await this.refreshRoster();
+        } catch (err) {
+            UI.toast(err.message, "error");
+        }
+    },
+
+    async removeFromAttendance(username) {
+        if (!TabManager.adminVerified) {
+            UI.toast("Admin access required", "error");
+            return;
+        }
+        if (!confirm(`Remove ${username} from attendance records? This deletes all their archived history.`)) return;
+        const pw = Admin.getPassword();
+        if (!pw) return UI.toast("Enter admin password in admin panel", "error");
+        try {
+            const result = await API.deleteAttendance(pw, username);
+            UI.toast(result.message);
+            TabManager.refreshAttendance();
         } catch (err) {
             UI.toast(err.message, "error");
         }

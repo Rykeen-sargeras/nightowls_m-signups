@@ -381,7 +381,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
 }
 .attendance-header {
     display: grid;
-    grid-template-columns: 50px 1fr 80px 120px;
+    grid-template-columns: 50px 1fr 80px 120px 40px;
     padding: 10px 12px;
     background: rgba(255, 209, 0, 0.08);
     border-bottom: 2px solid rgba(255, 209, 0, 0.2);
@@ -393,7 +393,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
 }
 .attendance-row {
     display: grid;
-    grid-template-columns: 50px 1fr 80px 120px;
+    grid-template-columns: 50px 1fr 80px 120px 40px;
     padding: 8px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.04);
     font-family: 'Cinzel', serif;
@@ -402,6 +402,18 @@ button:active:not(:disabled) { transform: scale(0.98); }
     align-items: center;
 }
 .attendance-row:hover { background: rgba(255,255,255,0.03); }
+.att-action { text-align: center; }
+.att-remove {
+    background: transparent !important; border: 1px solid rgba(255,68,68,0.3) !important;
+    color: #ff4444 !important; width: 24px !important; height: 24px !important;
+    padding: 0 !important; margin: 0 !important; font-size: 15px !important;
+    line-height: 22px; text-align: center; cursor: pointer;
+    border-radius: 3px; opacity: 0; transition: opacity 0.2s;
+    font-family: 'Lato', sans-serif !important; box-shadow: none !important;
+    text-shadow: none !important; letter-spacing: 0 !important;
+}
+.attendance-row:hover .att-remove { opacity: 0.7; }
+.att-remove:hover { opacity: 1 !important; background: rgba(255,68,68,0.15) !important; }
 .att-rank {
     text-align: center; font-weight: bold;
 }

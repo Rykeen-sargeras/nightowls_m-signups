@@ -70,7 +70,7 @@ const TabManager = {
 
             // Build table
             let html = '<div class="attendance-list">';
-            html += '<div class="attendance-header"><span class="att-rank">#</span><span class="att-name">Player</span><span class="att-count">Events</span><span class="att-last">Last Attended</span></div>';
+            html += '<div class="attendance-header"><span class="att-rank">#</span><span class="att-name">Player</span><span class="att-count">Events</span><span class="att-last">Last Attended</span><span class="att-action"></span></div>';
 
             data.attendance.forEach((player, i) => {
                 const rank = i + 1;
@@ -82,11 +82,13 @@ const TabManager = {
                 else if (rank === 2) rankClass = "silver";
                 else if (rank === 3) rankClass = "bronze";
 
+                const safeName = player.username.replace(/'/g, "\\'");
                 html += `<div class="attendance-row">
                     <span class="att-rank ${rankClass}">${rank}</span>
                     <span class="att-name">${player.username}</span>
                     <span class="att-count">${player.events}</span>
                     <span class="att-last">${lastDate}</span>
+                    <span class="att-action"><button class="att-remove" onclick="TabManager.removeAttendance('${safeName}')" title="Delete ${player.username}">&times;</button></span>
                 </div>`;
             });
 
@@ -107,6 +109,22 @@ const TabManager = {
         if (this.attendanceLoaded) {
             this.attendanceLoaded = false;
             this._loadAttendance();
+        }
+    },
+
+    async removeAttendance(username) {
+        if (!confirm(`Delete ALL attendance records for ${username}? This cannot be undone.`)) return;
+        const pw = Admin.getPassword();
+        if (!pw) return UI.toast("Enter admin password in the admin panel first", "error");
+        try {
+            const result = await API.deleteAttendance(pw, username);
+            UI.toast(result.message);
+            Admin.log(`Deleted attendance for ${username}`);
+            this.attendanceLoaded = false;
+            this._loadAttendance();
+        } catch (err) {
+            UI.toast(err.message, "error");
+            Admin.log("ERROR: " + err.message);
         }
     },
 };

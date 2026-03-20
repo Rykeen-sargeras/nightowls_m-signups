@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models.models import Player, EventState, ArchivedPlayer
 from app.models.schemas import (
     SignupRequest, SignupResponse, PlayerOut, RosterResponse,
-    ClassSpecResponse, VALID_SPECS, get_specs_for_class
+    ClassSpecResponse, AdminRequest, VALID_SPECS, get_specs_for_class
 )
 
 router = APIRouter()
@@ -38,6 +38,25 @@ async def get_attendance(db: AsyncSession = Depends(get_db)):
             for row in rows
         ]
     }
+
+
+@router.delete("/attendance/{username}")
+async def delete_attendance(username: str, req: AdminRequest, db: AsyncSession = Depends(get_db)):
+    """Delete all archived records for a player (admin only)."""
+    from app.routers.admin import _verify_password
+    _verify_password(req.password)
+
+    result = await db.execute(
+        select(ArchivedPlayer).where(ArchivedPlayer.username.ilike(username))
+    )
+    records = result.scalars().all()
+    if not records:
+        raise HTTPException(status_code=404, detail="No attendance records found")
+
+    for r in records:
+        await db.delete(r)
+    await db.commit()
+    return {"success": True, "message": f"Deleted {len(records)} records for {username}"}
 
 
 @router.get("/roster", response_model=RosterResponse)

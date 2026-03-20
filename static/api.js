@@ -83,4 +83,14 @@ const API = {
         if (!res.ok) throw new Error("Failed to load attendance");
         return await res.json();
     },
+    async deleteAttendance(password, username) {
+        const res = await fetch(`${CONFIG.API_URL}/api/attendance/${encodeURIComponent(username)}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Delete failed");
+        return data;
+    },
 };
