@@ -10,7 +10,7 @@ const Admin = {
     renderPanel() {
         document.getElementById("adminInner").innerHTML = `
             <h3>Admin Actions</h3>
-            <div class="form-group"><input type="password" id="adminPassword" placeholder="Admin Password"></div>
+            <div class="form-group"><label for="adminPassword" style="display:none;">Admin Password</label><input type="password" id="adminPassword" placeholder="Admin Password"></div>
             <div class="admin-grid">
                 <button class="btn btn-sm btn-secondary" id="btnArchive">Archive & Reset</button>
                 <button class="btn btn-sm" id="btnLock">Lock & Sort</button>

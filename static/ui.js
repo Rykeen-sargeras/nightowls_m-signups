@@ -45,14 +45,14 @@ const UI = {
     renderSignupForm() {
         document.getElementById("signupSection").innerHTML = `
             <h3>Event Registration</h3>
-            <div class="form-group"><label>Character Name</label>
+            <div class="form-group"><label for="username">Character Name</label>
                 <input type="text" id="username" placeholder="Enter your character name" maxlength="24" autocomplete="off">
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Class</label>
+                <div class="form-group"><label for="classSelect">Class</label>
                     <select id="classSelect"><option value="">Select Class</option></select>
                 </div>
-                <div class="form-group"><label>Specialization</label>
+                <div class="form-group"><label for="specSelect">Specialization</label>
                     <select id="specSelect" disabled><option value="">Select Spec</option></select>
                 </div>
             </div>

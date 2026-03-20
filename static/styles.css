@@ -68,18 +68,19 @@ body {
 /* === MAIN CONTAINER === */
 .container {
     max-width: 960px; min-height: 500px; margin: 140px auto 80px auto;
-    position: relative; background: rgba(15, 15, 30, 0.97);
+    position: relative; background: rgba(20, 20, 40, 0.98);
     border-radius: 20px; box-shadow: 0 0 80px rgba(0,0,0,1); padding-bottom: 40px;
+    overflow: hidden;
 }
 
 .border-frame {
     position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
     background-image: url('/static/border.png');
     background-size: 100% 100%; background-repeat: no-repeat;
-    pointer-events: none; z-index: -1;
+    pointer-events: none; z-index: 100;
 }
 
-.content-wrapper { padding: 50px 60px; position: relative; z-index: 1; }
+.content-wrapper { padding: 50px 60px; position: relative; z-index: 200; }
 .logo-container { width: 100%; text-align: center; margin-bottom: 20px; }
 .logo-container img { max-width: 90%; height: auto; filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); }
 
