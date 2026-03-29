@@ -17,10 +17,11 @@ const TabManager = {
         this.activeTab = tab;
         const container = document.querySelector(".container");
 
-        // Hide all tab contents
+        // Hide all tab contents (inside container)
         document.getElementById("signupsTabContent").style.display = "none";
         document.getElementById("streamsTabContent").style.display = "none";
         document.getElementById("attendanceTabContent").style.display = "none";
+        // Videos is outside the container
         document.getElementById("videosTabContent").style.display = "none";
 
         // Deactivate all tab buttons
@@ -29,8 +30,9 @@ const TabManager = {
         document.getElementById("tabAttendance").classList.remove("active");
         document.getElementById("tabVideos").classList.remove("active");
 
-        // Reset container width
+        // Reset container
         container.classList.remove("wide");
+        container.style.display = "";
 
         // Show selected tab
         if (tab === "signups") {
@@ -48,9 +50,9 @@ const TabManager = {
                 this._loadAttendance();
             }
         } else if (tab === "videos") {
+            container.style.display = "none";
             document.getElementById("videosTabContent").style.display = "block";
             document.getElementById("tabVideos").classList.add("active");
-            container.classList.add("wide");
             VideoManager.loadIfNeeded();
         }
     },

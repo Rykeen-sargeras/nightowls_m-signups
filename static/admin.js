@@ -10,23 +10,57 @@ const Admin = {
     renderPanel() {
         document.getElementById("adminInner").innerHTML = `
             <h3>Admin Actions</h3>
-            <div class="form-group"><label for="adminPassword" style="display:none;">Admin Password</label><input type="password" id="adminPassword" placeholder="Admin Password"></div>
-            <div class="admin-grid">
-                <button class="btn btn-sm btn-secondary" id="btnArchive">Archive & Reset</button>
-                <button class="btn btn-sm" id="btnLock">Lock & Sort</button>
-                <button class="btn btn-sm btn-secondary" id="btnUnlock">Unlock</button>
-                <button class="btn btn-sm btn-success" id="btnSave">Save Groups</button>
+            <div id="adminLoginSection">
+                <div class="form-group"><label for="adminPassword" style="display:none;">Admin Password</label><input type="password" id="adminPassword" placeholder="Admin Password"></div>
+                <button class="btn btn-sm" id="btnLogin" style="width:100%;">Login</button>
             </div>
-            <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
-            <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show Attendance Tab</button>
+            <div id="adminLoggedIn" style="display:none;">
+                <div class="admin-logged-badge">Logged in as Admin</div>
+                <div class="admin-grid">
+                    <button class="btn btn-sm btn-secondary" id="btnArchive">Archive & Reset</button>
+                    <button class="btn btn-sm" id="btnLock">Lock & Sort</button>
+                    <button class="btn btn-sm btn-secondary" id="btnUnlock">Unlock</button>
+                    <button class="btn btn-sm btn-success" id="btnSave">Save Groups</button>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
+                <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show Attendance Tab</button>
+            </div>
             <div id="debug-console">Waiting for logs...</div>
         `;
+        document.getElementById("btnLogin").addEventListener("click", () => this.login());
+        document.getElementById("adminPassword").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") this.login();
+        });
+    },
+
+    _wireAdminButtons() {
         document.getElementById("btnArchive").addEventListener("click", () => this.action("archive"));
         document.getElementById("btnLock").addEventListener("click", () => this.action("lock"));
         document.getElementById("btnUnlock").addEventListener("click", () => this.action("unlock"));
         document.getElementById("btnSave").addEventListener("click", () => this.saveGroups());
         document.getElementById("btnDrag").addEventListener("click", () => DragDrop.toggle());
         document.getElementById("btnAttendance").addEventListener("click", () => this.showAttendance());
+    },
+
+    async login() {
+        const pw = this.getPassword();
+        if (!pw) return UI.toast("Enter admin password", "error");
+        try {
+            await API.adminVerify(pw);
+            // Success — show admin controls
+            document.getElementById("adminLoginSection").style.display = "none";
+            document.getElementById("adminLoggedIn").style.display = "block";
+            this._wireAdminButtons();
+            TabManager.unlockAttendanceTab();
+            // Show video admin bar if on videos tab
+            const videoBar = document.getElementById("videoAdminBar");
+            if (videoBar) videoBar.style.display = "block";
+            UI.toast("Admin logged in");
+            this.log("Admin authenticated");
+        } catch (err) {
+            UI.toast("Wrong password", "error");
+            this.log("Login failed: " + err.message);
+        }
     },
     getPassword() { return document.getElementById("adminPassword")?.value || ""; },
     async action(type) {
@@ -77,18 +111,8 @@ const Admin = {
         if (el) el.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.innerHTML;
     },
     async showAttendance() {
-        const pw = this.getPassword();
-        if (!pw) return UI.toast("Enter admin password", "error");
-        try {
-            await API.adminVerify(pw);
-            TabManager.unlockAttendanceTab();
-            TabManager.switchTab("attendance");
-            UI.toast("Attendance tab unlocked");
-            this.log("Attendance tab shown");
-        } catch (err) {
-            UI.toast(err.message, "error");
-            this.log("ERROR: " + err.message);
-        }
+        TabManager.switchTab("attendance");
+        this.log("Switched to attendance tab");
     },
 };
 
@@ -96,14 +120,8 @@ const DragDrop = {
     enabled: false, draggedItem: null,
     async toggle() {
         if (this.enabled) { this.disable(); return; }
-        const pw = Admin.getPassword();
-        if (!pw) return UI.toast("Enter admin password", "error");
-        const btn = document.getElementById("btnDrag"); btn.textContent = "Verifying...";
-        try {
-            await API.adminVerify(pw);
-            this.enable(); UI.toast("Drag & drop enabled");
-            TabManager.unlockAttendanceTab();
-        } catch (err) { UI.toast(err.message, "error"); btn.textContent = "Enable Drag & Drop"; }
+        this.enable();
+        UI.toast("Drag & drop enabled");
     },
     enable() {
         this.enabled = true;

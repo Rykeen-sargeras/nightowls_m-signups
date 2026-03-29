@@ -54,23 +54,24 @@
             <h3>Attendance Tracker</h3>
             <div id="attendanceTable"></div>
         </div>
-
-        <!-- VIDEOS TAB -->
-        <div id="videosTabContent" style="display:none;">
-            <h3>Boss Guides</h3>
-            <div class="video-subtabs">
-                <button class="video-subtab active" id="subtabRaid" onclick="VideoManager.switchCategory('raid')">Raid</button>
-                <button class="video-subtab" id="subtabMythicplus" onclick="VideoManager.switchCategory('mythicplus')">Mythic+</button>
-            </div>
-            <div id="videoAdminBar" style="display:none;">
-                <button class="btn btn-sm btn-success" id="btnAddVideo" onclick="VideoManager.showAddForm()">+ Add Video</button>
-            </div>
-            <div id="videoAddForm" style="display:none;"></div>
-            <div id="videoGrid" class="video-grid"></div>
-            <div id="videoExpanded" style="display:none;"></div>
-        </div>
     </div>
 </div>
+
+<!-- VIDEOS TAB — outside the container, no border frame -->
+<div id="videosTabContent" class="videos-fullpage" style="display:none;">
+    <div class="academy-banner"><img src="/static/academy-banner.png" alt="NightOwls Academy - Raid and Mythic+ Videos"></div>
+    <div class="video-subtabs">
+        <button class="video-subtab active" id="subtabRaid" onclick="VideoManager.switchCategory('raid')">Raid</button>
+        <button class="video-subtab" id="subtabMythicplus" onclick="VideoManager.switchCategory('mythicplus')">Mythic+</button>
+    </div>
+    <div id="videoAdminBar" style="display:none;">
+        <button class="btn btn-sm btn-success" id="btnAddVideo" onclick="VideoManager.showAddForm()">+ Add Video</button>
+    </div>
+    <div id="videoAddForm" style="display:none;"></div>
+    <div id="videoGrid" class="video-grid"></div>
+    <div id="videoExpanded" style="display:none;"></div>
+</div>
+
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="/static/config.js"></script>
 <script src="/static/data.js"></script>

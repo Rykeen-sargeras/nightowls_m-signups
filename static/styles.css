@@ -108,6 +108,8 @@ body {
     overflow: hidden; transition: max-width 0.3s;
 }
 .container.wide { max-width: 1200px; }
+.container.wide .border-frame { display: none; }
+.container.wide { border: 2px solid var(--wow-border); }
 
 .border-frame {
     position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
@@ -264,6 +266,13 @@ button:active:not(:disabled) { transform: scale(0.98); }
 #lockedMessage h3 { margin: 0; color: #ff6a6a; border: none; font-family: 'Cinzel', serif; font-size: 1.1em; }
 
 /* === ADMIN === */
+.admin-logged-badge {
+    text-align: center; padding: 8px; margin-bottom: 12px;
+    background: rgba(34, 139, 34, 0.15); border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 4px; color: #81c784;
+    font-family: 'Cinzel', serif; font-size: 0.8em;
+    letter-spacing: 0.5px; text-transform: uppercase;
+}
 #adminToggle {
     position: fixed; top: 50px; right: 20px; width: 90px; height: 90px;
     background-color: transparent; background-image: url('/static/admin.png');
@@ -440,6 +449,19 @@ button:active:not(:disabled) { transform: scale(0.98); }
 }
 
 /* === VIDEOS TAB === */
+.videos-fullpage {
+    max-width: 1200px;
+    margin: 80px auto 60px auto;
+    padding: 20px 30px;
+    position: relative; z-index: 2;
+}
+.academy-banner {
+    width: 100%; text-align: center; margin-bottom: 20px;
+}
+.academy-banner img {
+    max-width: 100%; height: auto; border-radius: 6px;
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.6));
+}
 .video-subtabs {
     display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;
 }
