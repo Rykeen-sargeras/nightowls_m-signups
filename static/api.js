@@ -93,4 +93,36 @@ const API = {
         if (!res.ok) throw new Error(data.detail || "Delete failed");
         return data;
     },
+    async fetchVideos() {
+        const res = await fetch(`${CONFIG.API_URL}/api/videos/`);
+        if (!res.ok) throw new Error("Failed to load videos");
+        return await res.json();
+    },
+    async createVideo(password, category, boss_name, description, youtube_url, sort_order) {
+        const res = await fetch(`${CONFIG.API_URL}/api/videos/`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password, category, boss_name, description, youtube_url, sort_order }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Create failed");
+        return data;
+    },
+    async updateVideo(password, videoId, updates) {
+        const res = await fetch(`${CONFIG.API_URL}/api/videos/${videoId}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password, ...updates }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Update failed");
+        return data;
+    },
+    async deleteVideo(password, videoId) {
+        const res = await fetch(`${CONFIG.API_URL}/api/videos/${videoId}`, {
+            method: "DELETE", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Delete failed");
+        return data;
+    },
 };

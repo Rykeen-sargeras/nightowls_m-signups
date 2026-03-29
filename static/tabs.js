@@ -21,11 +21,13 @@ const TabManager = {
         document.getElementById("signupsTabContent").style.display = "none";
         document.getElementById("streamsTabContent").style.display = "none";
         document.getElementById("attendanceTabContent").style.display = "none";
+        document.getElementById("videosTabContent").style.display = "none";
 
         // Deactivate all tab buttons
         document.getElementById("tabSignups").classList.remove("active");
         document.getElementById("tabStreams").classList.remove("active");
         document.getElementById("tabAttendance").classList.remove("active");
+        document.getElementById("tabVideos").classList.remove("active");
 
         // Reset container width
         container.classList.remove("wide");
@@ -45,6 +47,11 @@ const TabManager = {
             if (!this.attendanceLoaded) {
                 this._loadAttendance();
             }
+        } else if (tab === "videos") {
+            document.getElementById("videosTabContent").style.display = "block";
+            document.getElementById("tabVideos").classList.add("active");
+            container.classList.add("wide");
+            VideoManager.loadIfNeeded();
         }
     },
 

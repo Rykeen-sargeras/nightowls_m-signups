@@ -26,3 +26,13 @@ class ArchivedPlayer(Base):
     role = Column(String, nullable=False)
     group_index = Column(String, default="")
     event_date = Column(DateTime(timezone=True), server_default=func.now())
+
+class Video(Base):
+    __tablename__ = "videos"
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String, nullable=False, index=True)  # "raid" or "mythicplus"
+    boss_name = Column(String, nullable=False)
+    description = Column(String, default="")
+    youtube_url = Column(String, nullable=False)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
