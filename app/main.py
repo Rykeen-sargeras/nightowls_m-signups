@@ -4,13 +4,19 @@ from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from app.database import engine, Base
 from app.routers import players, admin, groups, videos
+from app.services.scheduler import start_scheduler, stop_scheduler
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    start_scheduler()
     yield
+    stop_scheduler()
 
 app = FastAPI(title="NightOwls Mythic+ API", version="1.0.0", lifespan=lifespan)
 

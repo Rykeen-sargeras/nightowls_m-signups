@@ -5,10 +5,10 @@ const CONFIG = {
     // Same origin — no need for a separate URL since backend serves frontend
     API_URL: "",
 
-    // Event schedule: Friday 11:15 PM
+    // Event schedule: Friday 8:00 PM EST (auto-lock time)
     EVENT_DAY: 5,
-    EVENT_HOUR: 23,
-    EVENT_MIN: 15,
+    EVENT_HOUR: 20,
+    EVENT_MIN: 0,
 
     // Links
     TWITCH_URL: "https://www.twitch.tv/plated",
