@@ -17,61 +17,39 @@
         <button class="banner-tab active" id="tabSignups" onclick="TabManager.switchTab('signups')">Signups</button>
         <button class="banner-tab" id="tabStreams" onclick="TabManager.switchTab('streams')">Streams</button>
         <button class="banner-tab" id="tabVideos" onclick="TabManager.switchTab('videos')">Videos</button>
+        <button class="banner-tab" id="tabCommunity" onclick="TabManager.switchTab('community')">Community</button>
+        <button class="banner-tab" id="tabRules" onclick="TabManager.switchTab('rules')">Rules</button>
         <button class="banner-tab" id="tabAttendance" onclick="TabManager.switchTab('attendance')" style="display:none;">Attendance</button>
     </div>
     <div class="banner-timer" id="timerText">Loading...</div>
+    <div class="banner-auth"><button class="banner-tab" id="authButton">Sign Up / Login</button></div>
+</div>
+<div id="authModal" class="auth-modal" style="display:none;">
+    <div class="auth-card">
+        <button class="auth-close" id="authModalClose">&times;</button>
+        <h3>Community Account</h3>
+        <div class="panel-note warning-note">Please use a unique password for this site; do not reuse your World of Warcraft or other sensitive passwords.</div>
+        <div class="form-group"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="authPassword" placeholder="At least 8 characters"></div>
+        <div class="auth-actions"><button class="btn btn-sm" id="authSignupBtn">Sign Up</button><button class="btn btn-sm btn-secondary" id="authLoginBtn">Login</button></div>
+        <div id="authLogoutRow" style="display:none;"><button class="btn btn-sm btn-secondary" id="authLogoutBtn">Logout</button></div>
+    </div>
 </div>
 <button id="adminToggle" aria-label="Toggle Admin Panel"></button>
-<div id="adminSection">
-    <div class="admin-inner" id="adminInner"></div>
-</div>
+<div id="adminSection"><div class="admin-inner" id="adminInner"></div></div>
 <div class="container">
     <div class="border-frame"></div>
     <div class="content-wrapper">
         <div class="logo-container"><img src="/static/banner.png" alt="NightOwls Mythic+ Signups"></div>
         <div id="toast-container"></div>
-        <div id="statusMsg"></div>
-
-        <!-- SIGNUPS TAB -->
-        <div id="signupsTabContent">
-            <div id="signupSection"></div>
-            <div id="lockedMessage"></div>
-            <div id="displayArea">
-                <div id="rosterView" class="roster-grid"></div>
-                <div id="groupView"></div>
-            </div>
-        </div>
-
-        <!-- STREAMS TAB -->
-        <div id="streamsTabContent" style="display:none;">
-            <h3>NightOwls Streams</h3>
-            <div id="twitchTop" class="twitch-row"></div>
-            <div id="twitchBottom" class="twitch-row"></div>
-        </div>
-
-        <!-- ATTENDANCE TAB (admin only) -->
-        <div id="attendanceTabContent" style="display:none;">
-            <h3>Attendance Tracker</h3>
-            <div id="attendanceTable"></div>
-        </div>
+        <div id="signupsTabContent"><div id="signupSection"></div><div id="lockedMessage"></div><div id="displayArea"><div id="rosterView" class="roster-grid"></div><div id="groupView"></div></div></div>
+        <div id="streamsTabContent" style="display:none;"><h3>NightOwls Streams</h3><div id="twitchTop" class="twitch-row"></div><div id="twitchBottom" class="twitch-row"></div></div>
+        <div id="attendanceTabContent" style="display:none;"><h3>Attendance Tracker</h3><div id="attendanceTable"></div></div>
+        <div id="communityTabContent" style="display:none;"><div id="communityBannerWrap"></div><div id="communityAdminTools" style="display:none;"></div><div id="communityFormWrap"></div><div id="communityMemberList" class="community-grid"></div></div>
+        <div id="rulesTabContent" style="display:none;"><div id="rulesBannerWrap"></div><div id="rulesDisplay" class="rules-panel"></div><div id="rulesAdminEditor" style="display:none;"></div></div>
     </div>
 </div>
-
-<!-- VIDEOS TAB — outside the container, no border frame -->
-<div id="videosTabContent" class="videos-fullpage" style="display:none;">
-    <div class="academy-banner"><img src="/static/academy-banner.png" alt="NightOwls Academy - Raid and Mythic+ Videos"></div>
-    <div class="video-subtabs">
-        <button class="video-subtab active" id="subtabRaid" onclick="VideoManager.switchCategory('raid')">Raid</button>
-        <button class="video-subtab" id="subtabMythicplus" onclick="VideoManager.switchCategory('mythicplus')">Mythic+</button>
-    </div>
-    <div id="videoAdminBar" style="display:none;">
-        <button class="btn btn-sm btn-success" id="btnAddVideo" onclick="VideoManager.showAddForm()">+ Add Video</button>
-    </div>
-    <div id="videoAddForm" style="display:none;"></div>
-    <div id="videoGrid" class="video-grid"></div>
-    <div id="videoExpanded" style="display:none;"></div>
-</div>
-
+<div id="videosTabContent" class="videos-fullpage" style="display:none;"><div class="academy-banner"><img src="/static/academy-banner.png" alt="NightOwls Academy - Raid and Mythic+ Videos"></div><div class="video-subtabs"><button class="video-subtab active" id="subtabRaid" onclick="VideoManager.switchCategory('raid')">Raid</button><button class="video-subtab" id="subtabMythicplus" onclick="VideoManager.switchCategory('mythicplus')">Mythic+</button></div><div id="videoAdminBar" style="display:none;"></div><div id="videoGrid" class="video-grid"></div><div id="videoExpanded" style="display:none;"></div></div>
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script src="/static/config.js"></script>
 <script src="/static/data.js"></script>
@@ -82,6 +60,9 @@
 <script src="/static/twitch.js"></script>
 <script src="/static/tabs.js"></script>
 <script src="/static/videos.js"></script>
+<script src="/static/auth.js"></script>
+<script src="/static/community.js"></script>
+<script src="/static/rules.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

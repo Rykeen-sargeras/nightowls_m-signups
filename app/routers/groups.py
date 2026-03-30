@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.models import Player
 from app.models.schemas import AdminRequest, SaveGroupsRequest
-from app.services.sorting import auto_sort
 from app.routers.admin import _verify_password
+from app.services.sorting import auto_sort
 
 router = APIRouter()
 

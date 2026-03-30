@@ -1,11 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 from app.database import get_db
-from app.models.models import Player, EventState, ArchivedPlayer
+from app.models.models import ArchivedPlayer, EventState, Player
 from app.models.schemas import (
-    SignupRequest, SignupResponse, PlayerOut, RosterResponse,
-    ClassSpecResponse, AdminRequest, VALID_SPECS, get_specs_for_class
+    AdminRequest,
+    ClassSpecResponse,
+    PlayerOut,
+    RosterResponse,
+    SignupRequest,
+    SignupResponse,
+    VALID_SPECS,
+    get_specs_for_class,
 )
 
 router = APIRouter()
@@ -18,7 +24,6 @@ async def get_class_specs():
 
 @router.get("/attendance")
 async def get_attendance(db: AsyncSession = Depends(get_db)):
-    """Get attendance counts from archived events per player."""
     result = await db.execute(
         select(
             ArchivedPlayer.username,
@@ -42,13 +47,10 @@ async def get_attendance(db: AsyncSession = Depends(get_db)):
 
 @router.delete("/attendance/{username}")
 async def delete_attendance(username: str, req: AdminRequest, db: AsyncSession = Depends(get_db)):
-    """Delete all archived records for a player (admin only)."""
     from app.routers.admin import _verify_password
     _verify_password(req.password)
 
-    result = await db.execute(
-        select(ArchivedPlayer).where(ArchivedPlayer.username.ilike(username))
-    )
+    result = await db.execute(select(ArchivedPlayer).where(ArchivedPlayer.username.ilike(username)))
     records = result.scalars().all()
     if not records:
         raise HTTPException(status_code=404, detail="No attendance records found")
@@ -64,10 +66,7 @@ async def get_roster(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Player).order_by(Player.signed_up_at))
     players = result.scalars().all()
     state = await _get_event_state(db)
-    return RosterResponse(
-        players=[PlayerOut.model_validate(p) for p in players],
-        is_locked=state.is_locked if state else False,
-    )
+    return RosterResponse(players=[PlayerOut.model_validate(p) for p in players], is_locked=state.is_locked if state else False)
 
 
 @router.post("/signup", response_model=SignupResponse)
@@ -81,7 +80,6 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail=f"{req.specialization} is not a valid spec for {req.wow_class}")
 
     role = specs[req.specialization]
-
     existing = await db.execute(select(Player).where(Player.username.ilike(req.username)))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Character name already signed up")
@@ -90,11 +88,7 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
     db.add(player)
     await db.commit()
     await db.refresh(player)
-    return SignupResponse(
-        success=True,
-        message=f"{req.username} signed up as {req.wow_class} {req.specialization} ({role})",
-        player=PlayerOut.model_validate(player),
-    )
+    return SignupResponse(success=True, message=f"{req.username} signed up as {req.wow_class} {req.specialization} ({role})", player=PlayerOut.model_validate(player))
 
 
 @router.delete("/signup/{username}", response_model=SignupResponse)

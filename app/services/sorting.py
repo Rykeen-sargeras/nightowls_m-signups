@@ -1,8 +1,3 @@
-"""
-NightOwls Smart Group Sorting — V4
-Builds 5-man M+ groups: 1 Tank, 1 Healer, 3 DPS
-Prioritizes Lust + Brez per group, balances melee/ranged, shuffles for fairness.
-"""
 import random
 from app.models.schemas import has_lust, has_brez
 
