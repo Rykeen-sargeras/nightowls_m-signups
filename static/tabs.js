@@ -1,6 +1,5 @@
 // ============================================
-// TABS — Unified tab manager
-// Attendance tab is hidden until admin verifies
+// TABS — Unified tab manager (all tabs)
 // ============================================
 const TabManager = {
     activeTab: "signups",
@@ -8,7 +7,6 @@ const TabManager = {
     attendanceLoaded: false,
 
     switchTab(tab) {
-        // Attendance requires admin auth
         if (tab === "attendance" && !this.adminVerified) {
             UI.toast("Admin access required", "error");
             return;
@@ -17,123 +15,93 @@ const TabManager = {
         this.activeTab = tab;
         const container = document.querySelector(".container");
 
-        // Hide all tab contents (inside container)
-        document.getElementById("signupsTabContent").style.display = "none";
-        document.getElementById("streamsTabContent").style.display = "none";
-        document.getElementById("attendanceTabContent").style.display = "none";
-        // Videos is outside the container
-        document.getElementById("videosTabContent").style.display = "none";
+        // Hide all tab contents
+        const tabIds = ["signupsTabContent", "streamsTabContent", "attendanceTabContent", "videosTabContent", "communityTabContent", "rulesTabContent"];
+        tabIds.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
 
         // Deactivate all tab buttons
-        document.getElementById("tabSignups").classList.remove("active");
-        document.getElementById("tabStreams").classList.remove("active");
-        document.getElementById("tabAttendance").classList.remove("active");
-        document.getElementById("tabVideos").classList.remove("active");
+        const btnIds = ["tabSignups", "tabStreams", "tabAttendance", "tabVideos", "tabCommunity", "tabRules"];
+        btnIds.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove("active"); });
 
         // Reset container
         container.classList.remove("wide");
         container.style.display = "";
 
-        // Show selected tab
+        const tabBtn = document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1));
+        if (tabBtn) tabBtn.classList.add("active");
+
         if (tab === "signups") {
             document.getElementById("signupsTabContent").style.display = "block";
-            document.getElementById("tabSignups").classList.add("active");
         } else if (tab === "streams") {
             document.getElementById("streamsTabContent").style.display = "block";
-            document.getElementById("tabStreams").classList.add("active");
             container.classList.add("wide");
             TwitchManager.loadIfNeeded();
         } else if (tab === "attendance") {
             document.getElementById("attendanceTabContent").style.display = "block";
-            document.getElementById("tabAttendance").classList.add("active");
-            if (!this.attendanceLoaded) {
-                this._loadAttendance();
-            }
+            if (!this.attendanceLoaded) this._loadAttendance();
         } else if (tab === "videos") {
             container.style.display = "none";
             document.getElementById("videosTabContent").style.display = "block";
-            document.getElementById("tabVideos").classList.add("active");
             VideoManager.loadIfNeeded();
+        } else if (tab === "community") {
+            container.style.display = "none";
+            document.getElementById("communityTabContent").style.display = "block";
+            CommunityManager.loadIfNeeded();
+        } else if (tab === "rules") {
+            container.style.display = "none";
+            document.getElementById("rulesTabContent").style.display = "block";
+            RulesManager.loadIfNeeded();
         }
     },
 
-    // Called when admin successfully verifies — shows the attendance tab
     unlockAttendanceTab() {
         this.adminVerified = true;
-        document.getElementById("tabAttendance").style.display = "";
+        const el = document.getElementById("tabAttendance");
+        if (el) el.style.display = "";
         Admin.log("Attendance tab unlocked");
     },
 
     async _loadAttendance() {
         const tableDiv = document.getElementById("attendanceTable");
-        tableDiv.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">Loading attendance data...</div>';
-
+        tableDiv.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
         try {
             const data = await API.fetchAttendance();
             this.attendanceLoaded = true;
-
             if (!data.attendance || data.attendance.length === 0) {
-                tableDiv.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">No attendance data yet. Archive an event first.</div>';
+                tableDiv.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">No attendance data yet.</div>';
                 return;
             }
-
-            // Build table
             let html = '<div class="attendance-list">';
             html += '<div class="attendance-header"><span class="att-rank">#</span><span class="att-name">Player</span><span class="att-count">Events</span><span class="att-last">Last Attended</span><span class="att-action"></span></div>';
-
             data.attendance.forEach((player, i) => {
                 const rank = i + 1;
                 const lastDate = player.last_event ? new Date(player.last_event).toLocaleDateString() : "—";
-
-                // Medal colors for top 3
-                let rankClass = "";
-                if (rank === 1) rankClass = "gold";
-                else if (rank === 2) rankClass = "silver";
-                else if (rank === 3) rankClass = "bronze";
-
+                let rankClass = rank === 1 ? "gold" : rank === 2 ? "silver" : rank === 3 ? "bronze" : "";
                 const safeName = player.username.replace(/'/g, "\\'");
-                html += `<div class="attendance-row">
-                    <span class="att-rank ${rankClass}">${rank}</span>
-                    <span class="att-name">${player.username}</span>
-                    <span class="att-count">${player.events}</span>
-                    <span class="att-last">${lastDate}</span>
-                    <span class="att-action"><button class="att-remove" onclick="TabManager.removeAttendance('${safeName}')" title="Delete ${player.username}">&times;</button></span>
-                </div>`;
+                html += `<div class="attendance-row"><span class="att-rank ${rankClass}">${rank}</span><span class="att-name">${player.username}</span><span class="att-count">${player.events}</span><span class="att-last">${lastDate}</span><span class="att-action"><button class="att-remove" onclick="TabManager.removeAttendance('${safeName}')" title="Delete">&times;</button></span></div>`;
             });
-
-            // Summary
             const totalPlayers = data.attendance.length;
             const totalEvents = data.attendance.reduce((sum, p) => sum + p.events, 0);
-            html += `<div class="attendance-summary">${totalPlayers} players across ${totalEvents} total signups</div>`;
-            html += '</div>';
-
+            html += `<div class="attendance-summary">${totalPlayers} players across ${totalEvents} total signups</div></div>`;
             tableDiv.innerHTML = html;
         } catch (err) {
-            tableDiv.innerHTML = `<div style="text-align:center; color:#ff6a6a; padding:20px;">Error loading attendance: ${err.message}</div>`;
-        }
-    },
-
-    // Refresh attendance if it was already loaded
-    refreshAttendance() {
-        if (this.attendanceLoaded) {
-            this.attendanceLoaded = false;
-            this._loadAttendance();
+            tableDiv.innerHTML = `<div style="text-align:center;color:#ff6a6a;padding:20px;">Error: ${err.message}</div>`;
         }
     },
 
     async removeAttendance(username) {
-        if (!confirm(`Delete ALL attendance records for ${username}? This cannot be undone.`)) return;
+        if (!confirm(`Delete ALL attendance records for ${username}?`)) return;
         const pw = Admin.getPassword();
-        if (!pw) return UI.toast("Enter admin password in the admin panel first", "error");
+        if (!pw) return UI.toast("Enter admin password", "error");
         try {
-            const result = await API.deleteAttendance(pw, username);
-            UI.toast(result.message);
-            Admin.log(`Deleted attendance for ${username}`);
+            await API.deleteAttendance(pw, username);
+            UI.toast("Deleted");
             this.attendanceLoaded = false;
             this._loadAttendance();
-        } catch (err) {
-            UI.toast(err.message, "error");
-            Admin.log("ERROR: " + err.message);
-        }
+        } catch (err) { UI.toast(err.message, "error"); }
+    },
+
+    refreshAttendance() {
+        if (this.attendanceLoaded) { this.attendanceLoaded = false; this._loadAttendance(); }
     },
 };

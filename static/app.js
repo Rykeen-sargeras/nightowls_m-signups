@@ -1,3 +1,6 @@
+// ============================================
+// APP — Main application controller
+// ============================================
 const App = {
     players: [],
     isLocked: false,
@@ -32,6 +35,7 @@ const App = {
         UI.renderSignupForm();
         Admin.init();
         TwitchManager.init();
+        await AuthManager.init();
         await this.refreshRoster();
         this.pollTimer = setInterval(() => this.refreshRoster(), CONFIG.POLL_INTERVAL);
     },
@@ -104,23 +108,6 @@ const App = {
             const result = await API.cancelSignup(username);
             UI.toast(result.message);
             await this.refreshRoster();
-        } catch (err) {
-            UI.toast(err.message, "error");
-        }
-    },
-
-    async removeFromAttendance(username) {
-        if (!TabManager.adminVerified) {
-            UI.toast("Admin access required", "error");
-            return;
-        }
-        if (!confirm(`Remove ${username} from attendance records? This deletes all their archived history.`)) return;
-        const pw = Admin.getPassword();
-        if (!pw) return UI.toast("Enter admin password in admin panel", "error");
-        try {
-            const result = await API.deleteAttendance(pw, username);
-            UI.toast(result.message);
-            TabManager.refreshAttendance();
         } catch (err) {
             UI.toast(err.message, "error");
         }

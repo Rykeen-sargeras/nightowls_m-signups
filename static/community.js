@@ -1,72 +1,212 @@
+// ============================================
+// COMMUNITY — "Get to Know the Community" member directory
+// ============================================
 const CommunityManager = {
+    profiles: [],
     loaded: false,
-    rulesData: null,
-    resetLoaded() { this.loaded = false; },
-    async loadIfNeeded() { if (!this.loaded) await this.load(); this.render(); },
-    async load() {
-        const [membersData, myData, rulesData] = await Promise.all([
-            API.fetchCommunityMembers(),
-            AuthManager.isLoggedIn() ? API.fetchMyCommunityProfile().catch(() => ({ member: null })) : Promise.resolve({ member: null }),
-            API.fetchRules(),
-        ]);
-        this.members = membersData.members || [];
-        this.myMember = myData.member;
-        this.rulesData = rulesData;
-        this.loaded = true;
-    },
-    render() {
-        const banner = document.getElementById("communityBannerWrap");
-        banner.innerHTML = this.rulesData?.community_banner ? `<img src="${this.rulesData.community_banner}" alt="Community banner" class="dynamic-banner">` : "";
-        const formWrap = document.getElementById("communityFormWrap");
-        const adminTools = document.getElementById("communityAdminTools");
-        adminTools.style.display = AuthManager.isAdmin() ? "block" : "none";
-        adminTools.innerHTML = AuthManager.isAdmin() ? `<div class="inline-admin-tools"><input type="file" id="communityBannerFile" accept="image/*"><button class="btn btn-sm" onclick="CommunityManager.uploadBanner()">Upload Community Banner</button><button class="btn btn-sm btn-secondary" onclick="CommunityManager.saveOrder()">Save Member Order</button></div>` : "";
-        if (!AuthManager.isLoggedIn()) {
-            formWrap.innerHTML = `<div class="panel-note">Log in to create your community profile.</div>`;
-        } else {
-            const me = this.myMember || {};
-            formWrap.innerHTML = `
-                <h3>Get to Know the Community</h3>
-                <div class="panel-note warning-note">Please use a unique password for this site; do not reuse your World of Warcraft or other sensitive passwords.</div>
-                <div class="form-group"><label>Name</label><input id="cmName" value="${me.name || ''}" maxlength="60"></div>
-                <div class="form-row"><div class="form-group"><label>Main Class</label><input id="cmClass" value="${me.main_class || ''}" maxlength="50"></div><div class="form-group"><label>Guild Rank (optional)</label><input id="cmRank" value="${me.guild_rank || ''}" maxlength="80"></div></div>
-                <div class="form-group"><label>Bio / Description</label><textarea id="cmBio" ${AuthManager.isAdmin() ? '' : 'maxlength="750"'}>${me.bio || ''}</textarea><div class="small-help">${AuthManager.isAdmin() ? 'Admin account: no bio limit.' : '750 characters max.'}</div></div>
-                <div class="form-group"><label>Profile Picture</label><input type="file" id="cmImage" accept="image/*">${me.image_path ? `<div class="small-help">Current image is shown in your card below.</div>` : ''}</div>
-                <button class="btn" onclick="CommunityManager.saveProfile()">Save Community Profile</button>`;
-        }
-        const list = document.getElementById("communityMemberList");
-        if (!this.members.length) { list.innerHTML = `<div class="panel-note">No community profiles yet.</div>`; return; }
-        list.innerHTML = this.members.map(member => `
-            <div class="community-card" data-member-id="${member.id}">
-                <div class="community-card-head">
-                    ${member.image_path ? `<img src="${member.image_path}" class="community-avatar" alt="${member.name}">` : `<div class="community-avatar community-avatar-placeholder">🦉</div>`}
-                    <div><div class="community-name">${member.name}</div><div class="community-meta">${member.main_class}${member.guild_rank ? ` • ${member.guild_rank}` : ''}</div>${AuthManager.isAdmin() ? `<div class="seed-row"><label>Seed</label><input type="number" class="seed-input" value="${member.position_seed}" data-member-id="${member.id}"></div>` : ''}</div>
-                </div>
-                <div class="community-bio">${(member.bio || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</div>
-            </div>`).join('');
-    },
-    async saveProfile() {
-        const formData = new FormData();
-        formData.append("name", document.getElementById("cmName").value.trim());
-        formData.append("main_class", document.getElementById("cmClass").value.trim());
-        formData.append("guild_rank", document.getElementById("cmRank").value.trim());
-        formData.append("bio", document.getElementById("cmBio").value);
-        const file = document.getElementById("cmImage").files[0];
-        if (file) formData.append("image", file);
+    banner: "",
+
+    async loadIfNeeded() {
         try {
-            await API.saveCommunityProfile(formData);
-            UI.toast("Community profile saved");
+            const data = await API.fetchProfiles();
+            this.profiles = data.profiles || [];
+            const bannerData = await API.getContent("community_banner");
+            this.banner = bannerData.value || "";
+            this.loaded = true;
+        } catch (e) {
+            Admin.log("Community load error: " + e.message);
+        }
+        this.render();
+    },
+
+    render() {
+        const container = document.getElementById("communityGrid");
+        if (!container) return;
+
+        const isLoggedIn = AuthManager.isLoggedIn();
+        const isAdmin = AuthManager.isAdmin();
+        const myUserId = AuthManager.currentUser?.id;
+        const hasProfile = this.profiles.some(p => p.user_id === myUserId);
+
+        // Admin banner upload
+        const bannerArea = document.getElementById("communityBannerArea");
+        if (bannerArea) {
+            if (this.banner) {
+                bannerArea.innerHTML = `<img src="${this.banner}" class="community-custom-banner" alt="Community Banner">`;
+            } else {
+                bannerArea.innerHTML = "";
+            }
+            if (isAdmin) {
+                bannerArea.innerHTML += `<div class="banner-upload-bar"><label for="communityBannerUpload" class="btn btn-sm btn-secondary" style="width:auto;display:inline-block;cursor:pointer;">Upload Banner</label><input type="file" id="communityBannerUpload" accept="image/*" style="display:none;" onchange="CommunityManager.uploadBanner(this)"></div>`;
+            }
+        }
+
+        // Create profile button
+        const adminBar = document.getElementById("communityAdminBar");
+        if (adminBar) {
+            adminBar.innerHTML = "";
+            if (isLoggedIn && !hasProfile) {
+                adminBar.innerHTML = `<button class="btn btn-sm btn-success" onclick="CommunityManager.showProfileForm()" style="width:auto;display:inline-block;">+ Create My Profile</button>`;
+            }
+        }
+
+        // Render profile cards
+        if (this.profiles.length === 0) {
+            container.innerHTML = '<div class="video-empty">No community profiles yet. Log in and create yours!</div>';
+            return;
+        }
+
+        container.innerHTML = "";
+        this.profiles.forEach(p => {
+            const card = document.createElement("div");
+            card.className = "community-card";
+
+            const isOwn = p.user_id === myUserId;
+            const classColor = CLASS_COLORS[p.main_class] || "#ccc";
+
+            card.innerHTML = `
+                <div class="community-card-header">
+                    ${p.profile_image ? `<img src="${p.profile_image}" class="community-avatar" alt="${p.display_name}">` : `<div class="community-avatar-placeholder">${p.display_name.charAt(0).toUpperCase()}</div>`}
+                    <div class="community-card-info">
+                        <div class="community-card-name">${p.display_name}</div>
+                        ${p.main_class ? `<div class="community-card-class" style="color:${classColor}">${p.main_class}</div>` : ''}
+                        ${p.guild_rank ? `<div class="community-card-rank">${p.guild_rank}</div>` : ''}
+                    </div>
+                    <div class="community-card-actions">
+                        ${isOwn ? `<button class="video-edit-btn" onclick="CommunityManager.showProfileForm(${p.user_id})" title="Edit">&#9998;</button>` : ''}
+                        ${isAdmin ? `<button class="video-delete-btn" onclick="CommunityManager.deleteProfile(${p.id}, '${p.display_name.replace(/'/g, "\\'")}')" title="Delete">&times;</button>` : ''}
+                        ${isAdmin ? `<input type="number" class="seed-input" value="${p.seed}" onchange="CommunityManager.updateSeed(${p.user_id}, this.value)" title="Position seed (lower = first)">` : ''}
+                    </div>
+                </div>
+                ${p.bio ? `<div class="community-card-bio">${p.bio}</div>` : ''}
+            `;
+            container.appendChild(card);
+        });
+    },
+
+    showProfileForm(editUserId) {
+        const existing = editUserId ? this.profiles.find(p => p.user_id === editUserId) : null;
+        const isEdit = !!existing;
+        const isAdmin = AuthManager.isAdmin();
+        const charLimit = isAdmin ? "" : `maxlength="750"`;
+        const charNote = isAdmin ? "" : `<span class="char-limit-note">Max 750 characters</span>`;
+
+        const form = document.getElementById("communityProfileForm");
+        form.style.display = "block";
+        form.innerHTML = `
+            <div class="video-form">
+                <h4>${isEdit ? "Edit" : "Create"} Profile</h4>
+                <div class="form-group"><label for="cpName">Display Name</label>
+                    <input type="text" id="cpName" value="${isEdit ? existing.display_name.replace(/"/g, '&quot;') : ''}" placeholder="Your name"></div>
+                <div class="form-group"><label for="cpClass">Main Class</label>
+                    <select id="cpClass">
+                        <option value="">Select Class</option>
+                        ${Object.keys(SPEC_DATA).sort().map(c => `<option value="${c}" ${isEdit && existing.main_class === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select></div>
+                <div class="form-group"><label for="cpRank">Guild Rank (optional)</label>
+                    <input type="text" id="cpRank" value="${isEdit ? (existing.guild_rank || '').replace(/"/g, '&quot;') : ''}" placeholder="e.g. Officer, Raider, Social"></div>
+                <div class="form-group"><label for="cpBio">Bio ${charNote}</label>
+                    <textarea id="cpBio" ${charLimit}>${isEdit ? (existing.bio || '') : ''}</textarea></div>
+                <div class="form-group"><label for="cpImage">Profile Picture</label>
+                    <input type="file" id="cpImage" accept="image/*" onchange="CommunityManager._previewImage(this)">
+                    <div id="cpImagePreview">${isEdit && existing.profile_image ? `<img src="${existing.profile_image}" class="community-avatar" style="margin-top:8px;">` : ''}</div></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-sm btn-success" onclick="CommunityManager.submitProfile(${isEdit})">${isEdit ? "Update" : "Create"}</button>
+                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('communityProfileForm').style.display='none'">Cancel</button>
+                </div>
+            </div>
+        `;
+        form.scrollIntoView({ behavior: "smooth" });
+    },
+
+    _previewImage(input) {
+        const preview = document.getElementById("cpImagePreview");
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.innerHTML = `<img src="${e.target.result}" class="community-avatar" style="margin-top:8px;">`;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    },
+
+    async submitProfile(isEdit) {
+        const name = document.getElementById("cpName").value.trim();
+        const mainClass = document.getElementById("cpClass").value;
+        const rank = document.getElementById("cpRank").value.trim();
+        const bio = document.getElementById("cpBio").value;
+
+        if (!name) return UI.toast("Display name is required", "error");
+
+        // Get image as base64
+        let imageData = "";
+        const fileInput = document.getElementById("cpImage");
+        if (fileInput.files && fileInput.files[0]) {
+            imageData = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const profileData = {
+            display_name: name,
+            main_class: mainClass,
+            guild_rank: rank,
+            bio: bio,
+        };
+        if (imageData) profileData.profile_image = imageData;
+
+        try {
+            if (isEdit) {
+                await API.updateProfile(profileData);
+                UI.toast("Profile updated");
+            } else {
+                await API.createProfile(profileData);
+                UI.toast("Profile created!");
+            }
+            document.getElementById("communityProfileForm").style.display = "none";
             this.loaded = false;
             await this.loadIfNeeded();
-        } catch (err) { UI.toast(err.message, "error"); }
+        } catch (err) {
+            UI.toast(err.message, "error");
+        }
     },
-    async saveOrder() {
-        const seeds = Array.from(document.querySelectorAll('.seed-input')).map(input => ({ member_id: parseInt(input.dataset.memberId, 10), position_seed: parseInt(input.value, 10) || 0 }));
-        try { await API.reorderCommunity(seeds); UI.toast("Community order saved"); this.loaded = false; await this.loadIfNeeded(); } catch (err) { UI.toast(err.message, "error"); }
+
+    async deleteProfile(profileId, name) {
+        if (!confirm(`Delete ${name}'s profile?`)) return;
+        try {
+            await API.deleteProfile(profileId);
+            UI.toast(`Deleted ${name}'s profile`);
+            this.loaded = false;
+            await this.loadIfNeeded();
+        } catch (err) {
+            UI.toast(err.message, "error");
+        }
     },
-    async uploadBanner() {
-        const file = document.getElementById('communityBannerFile').files[0];
-        if (!file) return UI.toast('Choose a banner image first', 'error');
-        try { await API.uploadBanner('community', file); UI.toast('Community banner updated'); this.loaded = false; await this.loadIfNeeded(); } catch (err) { UI.toast(err.message, 'error'); }
+
+    async updateSeed(userId, seed) {
+        try {
+            await API.updateSeed(userId, parseInt(seed));
+            UI.toast("Position updated");
+        } catch (err) {
+            UI.toast(err.message, "error");
+        }
+    },
+
+    async uploadBanner(input) {
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                await API.updateContent("community_banner", e.target.result);
+                this.banner = e.target.result;
+                this.render();
+                UI.toast("Banner updated");
+            } catch (err) {
+                UI.toast(err.message, "error");
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
     },
 };
