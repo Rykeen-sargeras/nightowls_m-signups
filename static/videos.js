@@ -90,12 +90,18 @@ const VideoManager = {
             <div class="video-expanded-inner">
                 <div class="video-expanded-header">
                     <h4>${video.boss_name}</h4>
-                    <button class="video-close-btn" onclick="VideoManager.collapse()">&times;</button>
+                    <div class="video-expanded-actions">
+                        ${TabManager.adminVerified ? `
+                            <button class="video-edit-btn" onclick="VideoManager.collapse(); VideoManager.showEditForm(${video.id})" title="Edit">&#9998; Edit</button>
+                            <button class="video-delete-btn" onclick="VideoManager.deleteVideo(${video.id}, '${video.boss_name.replace(/'/g, "\\'")}')" title="Delete">&times;</button>
+                        ` : ''}
+                        <button class="video-close-btn" onclick="VideoManager.collapse()">&times;</button>
+                    </div>
                 </div>
                 ${embedUrl ? `<div class="video-expanded-player">
                     <iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>` : `<div class="video-expanded-player"><a href="${video.youtube_url}" target="_blank">Watch on YouTube</a></div>`}
-                ${video.description ? `<div class="video-expanded-desc">${video.description}</div>` : ''}
+                ${video.description ? `<div class="video-expanded-desc">${video.description.replace(/\n/g, '<br>')}</div>` : ''}
             </div>
         `;
 
@@ -119,7 +125,7 @@ const VideoManager = {
                 <div class="form-group"><label for="vfBoss">Boss / Dungeon Name</label>
                     <input type="text" id="vfBoss" placeholder="e.g. Queen Ansurek"></div>
                 <div class="form-group"><label for="vfDesc">Description</label>
-                    <input type="text" id="vfDesc" placeholder="Short description of the fight or strategy"></div>
+                    <textarea id="vfDesc" rows="12" placeholder="Write your full description here.&#10;&#10;Use Enter for line breaks.&#10;&#10;Phase 1:&#10;- Tank boss near the wall&#10;- Dodge the fire circles&#10;&#10;Phase 2:&#10;- Stack for healing&#10;- Use defensives on slam"></textarea></div>
                 <div class="form-group"><label for="vfUrl">YouTube URL</label>
                     <input type="text" id="vfUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
                 <div class="form-group"><label for="vfOrder">Sort Order (lower = first)</label>
@@ -144,7 +150,7 @@ const VideoManager = {
                 <div class="form-group"><label for="vfBoss">Boss / Dungeon Name</label>
                     <input type="text" id="vfBoss" value="${video.boss_name.replace(/"/g, '&quot;')}"></div>
                 <div class="form-group"><label for="vfDesc">Description</label>
-                    <input type="text" id="vfDesc" value="${(video.description || '').replace(/"/g, '&quot;')}"></div>
+                    <textarea id="vfDesc" rows="12">${(video.description || '').replace(/</g, '&lt;')}</textarea></div>
                 <div class="form-group"><label for="vfUrl">YouTube URL</label>
                     <input type="text" id="vfUrl" value="${video.youtube_url}"></div>
                 <div class="form-group"><label for="vfOrder">Sort Order</label>
