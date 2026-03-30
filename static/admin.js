@@ -2,6 +2,31 @@ const Admin = {
     init() {
         document.getElementById("adminToggle").addEventListener("click", () => this.toggle());
         this.renderPanel();
+        this._checkAutoLogin();
+    },
+
+    async _checkAutoLogin() {
+        try {
+            const result = await API.checkAdminIp();
+            if (result.is_admin && result.token) {
+                this.log("Auto-login: trusted IP detected (" + result.ip + ")");
+                // Store the token so getPassword() returns it for API calls
+                this._autoToken = result.token;
+                this._unlockAdminUI();
+                UI.toast("Admin auto-logged in");
+            }
+        } catch (e) {
+            // Silent fail — just means no auto-login
+        }
+    },
+
+    _unlockAdminUI() {
+        document.getElementById("adminLoginSection").style.display = "none";
+        document.getElementById("adminLoggedIn").style.display = "block";
+        this._wireAdminButtons();
+        TabManager.unlockAttendanceTab();
+        const videoBar = document.getElementById("videoAdminBar");
+        if (videoBar) videoBar.style.display = "block";
     },
     toggle() {
         const s = document.getElementById("adminSection");
@@ -47,22 +72,15 @@ const Admin = {
         if (!pw) return UI.toast("Enter admin password", "error");
         try {
             await API.adminVerify(pw);
-            // Success — show admin controls
-            document.getElementById("adminLoginSection").style.display = "none";
-            document.getElementById("adminLoggedIn").style.display = "block";
-            this._wireAdminButtons();
-            TabManager.unlockAttendanceTab();
-            // Show video admin bar if on videos tab
-            const videoBar = document.getElementById("videoAdminBar");
-            if (videoBar) videoBar.style.display = "block";
+            this._unlockAdminUI();
             UI.toast("Admin logged in");
-            this.log("Admin authenticated");
+            this.log("Admin authenticated via password");
         } catch (err) {
             UI.toast("Wrong password", "error");
             this.log("Login failed: " + err.message);
         }
     },
-    getPassword() { return document.getElementById("adminPassword")?.value || ""; },
+    getPassword() { return this._autoToken || document.getElementById("adminPassword")?.value || ""; },
     async action(type) {
         const pw = this.getPassword();
         if (!pw) return UI.toast("Enter admin password", "error");

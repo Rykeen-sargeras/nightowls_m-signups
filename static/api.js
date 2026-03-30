@@ -1,4 +1,9 @@
 const API = {
+    async checkAdminIp() {
+        const res = await fetch(`${CONFIG.API_URL}/api/admin/check-ip`);
+        if (!res.ok) return { is_admin: false };
+        return await res.json();
+    },
     async fetchSpecs() {
         const res = await fetch(`${CONFIG.API_URL}/api/specs`);
         if (!res.ok) throw new Error("Failed to load spec data");

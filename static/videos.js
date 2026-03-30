@@ -125,7 +125,7 @@ const VideoManager = {
                 <div class="form-group"><label for="vfBoss">Boss / Dungeon Name</label>
                     <input type="text" id="vfBoss" placeholder="e.g. Queen Ansurek"></div>
                 <div class="form-group"><label for="vfDesc">Description</label>
-                    <textarea id="vfDesc" rows="12" placeholder="Write your full description here.&#10;&#10;Use Enter for line breaks.&#10;&#10;Phase 1:&#10;- Tank boss near the wall&#10;- Dodge the fire circles&#10;&#10;Phase 2:&#10;- Stack for healing&#10;- Use defensives on slam"></textarea></div>
+                    <textarea id="vfDesc"></textarea></div>
                 <div class="form-group"><label for="vfUrl">YouTube URL</label>
                     <input type="text" id="vfUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
                 <div class="form-group"><label for="vfOrder">Sort Order (lower = first)</label>
@@ -136,6 +136,9 @@ const VideoManager = {
                 </div>
             </div>
         `;
+        // Set placeholder programmatically to preserve newlines
+        document.getElementById("vfDesc").placeholder = "Write your full description here.\n\nUse Enter for line breaks.\n\nPhase 1:\n- Tank boss near the wall\n- Dodge the fire circles\n\nPhase 2:\n- Stack for healing\n- Use defensives on slam";
+        form.scrollIntoView({ behavior: "smooth" });
     },
 
     showEditForm(videoId) {
@@ -150,7 +153,7 @@ const VideoManager = {
                 <div class="form-group"><label for="vfBoss">Boss / Dungeon Name</label>
                     <input type="text" id="vfBoss" value="${video.boss_name.replace(/"/g, '&quot;')}"></div>
                 <div class="form-group"><label for="vfDesc">Description</label>
-                    <textarea id="vfDesc" rows="12">${(video.description || '').replace(/</g, '&lt;')}</textarea></div>
+                    <textarea id="vfDesc"></textarea></div>
                 <div class="form-group"><label for="vfUrl">YouTube URL</label>
                     <input type="text" id="vfUrl" value="${video.youtube_url}"></div>
                 <div class="form-group"><label for="vfOrder">Sort Order</label>
@@ -161,6 +164,9 @@ const VideoManager = {
                 </div>
             </div>
         `;
+        // Set value programmatically — this preserves newlines properly
+        document.getElementById("vfDesc").value = video.description || "";
+        form.scrollIntoView({ behavior: "smooth" });
     },
 
     async submitAdd() {
