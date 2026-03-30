@@ -6,13 +6,15 @@ from typing import Optional
 from app.database import get_db
 from app.models.models import User
 from app.services.auth import hash_password, verify_password, create_token, decode_token
+from app.routers.admin import _verify_password as verify_admin_password
 
 router = APIRouter()
+
+DEFAULT_RESET_PASSWORD = "owl123"
 
 
 class RegisterRequest(BaseModel):
     username: str
-    email: str
     password: str
 
     @field_validator("username")
@@ -36,20 +38,33 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return v
+
+
+class AdminResetRequest(BaseModel):
+    admin_password: str
+    user_id: int
+
+
 async def get_current_user(authorization: Optional[str] = Header(None), db: AsyncSession = Depends(get_db)) -> Optional[User]:
-    """Extract user from JWT token in Authorization header. Returns None if no token."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization.split(" ", 1)[1]
     payload = decode_token(token)
     user_id = int(payload["sub"])
     result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    return user
+    return result.scalar_one_or_none()
 
 
 async def require_user(authorization: Optional[str] = Header(None), db: AsyncSession = Depends(get_db)) -> User:
-    """Like get_current_user but raises 401 if not logged in."""
     user = await get_current_user(authorization, db)
     if not user:
         raise HTTPException(status_code=401, detail="Login required")
@@ -57,7 +72,6 @@ async def require_user(authorization: Optional[str] = Header(None), db: AsyncSes
 
 
 async def require_admin(authorization: Optional[str] = Header(None), db: AsyncSession = Depends(get_db)) -> User:
-    """Requires logged-in admin user."""
     user = await require_user(authorization, db)
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -66,18 +80,20 @@ async def require_admin(authorization: Optional[str] = Header(None), db: AsyncSe
 
 @router.post("/register")
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    # Check duplicates
-    existing = await db.execute(select(User).where(
-        (User.username.ilike(req.username)) | (User.email.ilike(req.email))
-    ))
+    existing = await db.execute(select(User).where(User.username.ilike(req.username)))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Username or email already taken")
+        raise HTTPException(status_code=409, detail="Username already taken")
+
+    try:
+        pw_hash = hash_password(req.password)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Password hashing failed: {str(e)}")
 
     user = User(
         username=req.username,
-        email=req.email,
-        password_hash=hash_password(req.password),
+        password_hash=pw_hash,
         is_admin=False,
+        password_reset_required=False,
     )
     db.add(user)
     await db.commit()
@@ -88,7 +104,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         "success": True,
         "message": f"Welcome, {user.username}!",
         "token": token,
-        "user": {"id": user.id, "username": user.username, "is_admin": user.is_admin},
+        "user": {"id": user.id, "username": user.username, "is_admin": user.is_admin, "password_reset_required": False},
     }
 
 
@@ -103,7 +119,12 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     return {
         "success": True,
         "token": token,
-        "user": {"id": user.id, "username": user.username, "is_admin": user.is_admin},
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "is_admin": user.is_admin,
+            "password_reset_required": user.password_reset_required,
+        },
     }
 
 
@@ -112,6 +133,52 @@ async def get_me(user: User = Depends(require_user)):
     return {
         "id": user.id,
         "username": user.username,
-        "email": user.email,
         "is_admin": user.is_admin,
+        "password_reset_required": user.password_reset_required,
     }
+
+
+@router.post("/change-password")
+async def change_password(req: ChangePasswordRequest, user: User = Depends(require_user), db: AsyncSession = Depends(get_db)):
+    """Change the logged-in user's password. Also clears the reset flag."""
+    user.password_hash = hash_password(req.new_password)
+    user.password_reset_required = False
+    await db.commit()
+    return {"success": True, "message": "Password changed successfully"}
+
+
+# === ADMIN ENDPOINTS ===
+
+@router.post("/members")
+async def get_member_list(req: dict, db: AsyncSession = Depends(get_db)):
+    """Get all registered users (admin only). Requires admin_password in body."""
+    verify_admin_password(req.get("admin_password", ""))
+    result = await db.execute(select(User).order_by(User.created_at))
+    users = result.scalars().all()
+    return {
+        "members": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "is_admin": u.is_admin,
+                "password_reset_required": u.password_reset_required,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in users
+        ]
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(req: AdminResetRequest, db: AsyncSession = Depends(get_db)):
+    """Reset a user's password to 'owl123' (admin only)."""
+    verify_admin_password(req.admin_password)
+    result = await db.execute(select(User).where(User.id == req.user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password_hash = hash_password(DEFAULT_RESET_PASSWORD)
+    user.password_reset_required = True
+    await db.commit()
+    return {"success": True, "message": f"Password for {user.username} reset to '{DEFAULT_RESET_PASSWORD}'"}

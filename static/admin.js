@@ -49,6 +49,7 @@ const Admin = {
                 </div>
                 <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
                 <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show Attendance Tab</button>
+                <button class="btn btn-sm btn-secondary" id="btnMembers" style="width:100%;margin-top:4px;">Member List</button>
             </div>
             <div id="debug-console">Waiting for logs...</div>
         `;
@@ -65,6 +66,7 @@ const Admin = {
         document.getElementById("btnSave").addEventListener("click", () => this.saveGroups());
         document.getElementById("btnDrag").addEventListener("click", () => DragDrop.toggle());
         document.getElementById("btnAttendance").addEventListener("click", () => this.showAttendance());
+        document.getElementById("btnMembers").addEventListener("click", () => AuthManager.showMemberList());
     },
 
     async login() {

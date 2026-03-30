@@ -15,10 +15,10 @@ const API = {
     loadToken() { this._token = localStorage.getItem("nightowls_token"); return !!this._token; },
 
     // --- AUTH ---
-    async register(username, email, password) {
+    async register(username, password) {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/register`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password }),
+            body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Registration failed");
@@ -37,6 +37,33 @@ const API = {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/me`, { headers: this._headers() });
         if (!res.ok) throw new Error("Not logged in");
         return await res.json();
+    },
+    async changePassword(newPassword) {
+        const res = await fetch(`${CONFIG.API_URL}/api/auth/change-password`, {
+            method: "POST", headers: this._headers(),
+            body: JSON.stringify({ new_password: newPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Change failed");
+        return data;
+    },
+    async getMemberList(adminPassword) {
+        const res = await fetch(`${CONFIG.API_URL}/api/auth/members`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ admin_password: adminPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to load members");
+        return data;
+    },
+    async resetMemberPassword(adminPassword, userId) {
+        const res = await fetch(`${CONFIG.API_URL}/api/auth/reset-password`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ admin_password: adminPassword, user_id: userId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Reset failed");
+        return data;
     },
 
     // --- ADMIN ---

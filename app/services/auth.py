@@ -1,15 +1,15 @@
 """
-Authentication service — bcrypt hashing + JWT tokens
+Authentication service — bcrypt hashing + JWT tokens (using PyJWT)
 """
 import os
 import bcrypt
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
+import jwt
 from fastapi import HTTPException
 
 SECRET_KEY = os.getenv("JWT_SECRET", "nightowls-super-secret-key-change-in-production")
 ALGORITHM = "HS256"
-TOKEN_EXPIRE_HOURS = 72  # 3 days
+TOKEN_EXPIRE_HOURS = 72
 
 
 def hash_password(password: str) -> str:
@@ -35,5 +35,7 @@ def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
