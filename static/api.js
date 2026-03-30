@@ -232,8 +232,12 @@ const API = {
         return await res.json();
     },
     async updateContent(key, value) {
+        const headers = this._headers();
+        const adminPassword = (typeof Admin !== "undefined" && typeof Admin.getPassword === "function") ? Admin.getPassword() : "";
+        if (adminPassword) headers["X-Admin-Password"] = adminPassword;
+
         const res = await fetch(`${CONFIG.API_URL}/api/content/${key}`, {
-            method: "PUT", headers: this._headers(),
+            method: "PUT", headers,
             body: JSON.stringify({ value }),
         });
         return await this._parseResponse(res, "Update failed");

@@ -13,6 +13,7 @@ const Admin = {
                 // Store the token so getPassword() returns it for API calls
                 this._autoToken = result.token;
                 this._unlockAdminUI();
+                this._refreshAdminAwareTabs();
                 UI.toast("Admin auto-logged in");
             }
         } catch (e) {
@@ -68,6 +69,14 @@ const Admin = {
         document.getElementById("btnAttendance").addEventListener("click", () => this.showAttendance());
         document.getElementById("btnMembers").addEventListener("click", () => AuthManager.showMemberList());
     },
+    _refreshAdminAwareTabs() {
+        if (typeof CommunityManager !== "undefined" && typeof CommunityManager.render === "function") {
+            CommunityManager.render();
+        }
+        if (typeof RulesManager !== "undefined" && typeof RulesManager.render === "function") {
+            RulesManager.render();
+        }
+    },
 
     async login() {
         const pw = this.getPassword();
@@ -75,6 +84,7 @@ const Admin = {
         try {
             await API.adminVerify(pw);
             this._unlockAdminUI();
+            this._refreshAdminAwareTabs();
             UI.toast("Admin logged in");
             this.log("Admin authenticated via password");
         } catch (err) {

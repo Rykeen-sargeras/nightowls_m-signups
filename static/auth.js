@@ -182,7 +182,14 @@ const AuthManager = {
     },
 
     isLoggedIn() { return !!this.currentUser; },
-    isAdmin() { return this.currentUser?.is_admin || false; },
+    isAdmin() {
+        if (this.currentUser?.is_admin) return true;
+        try {
+            return typeof Admin !== "undefined" && typeof Admin.getPassword === "function" && !!Admin.getPassword();
+        } catch (_) {
+            return false;
+        }
+    },
 
     // === ADMIN: Member List ===
     async showMemberList() {
