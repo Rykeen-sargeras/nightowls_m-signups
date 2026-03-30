@@ -5,5 +5,3 @@ asyncpg==0.29.0
 pydantic==2.9.0
 apscheduler==3.10.4
 pytz==2024.1
-python-multipart==0.0.9
-email-validator==2.2.0

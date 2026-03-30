@@ -7,6 +7,7 @@ const UI = {
         container.appendChild(el);
         setTimeout(() => { el.classList.add("removing"); setTimeout(() => el.remove(), 300); }, 3500);
     },
+
     updateTimer() {
         const now = new Date();
         const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
@@ -25,6 +26,7 @@ const UI = {
         const s = Math.floor((diff % 60000) / 1000);
         document.getElementById("timerText").innerHTML = `Next Mythic+ Event: <span class="timer-digits">${d}d</span><span class="timer-sep">:</span><span class="timer-digits">${String(h).padStart(2,'0')}h</span><span class="timer-sep">:</span><span class="timer-digits">${String(m).padStart(2,'0')}m</span><span class="timer-sep">:</span><span class="timer-digits">${String(s).padStart(2,'0')}s</span>`;
     },
+
     initParticles() {
         const c = document.getElementById("particles");
         for (let i = 0; i < 25; i++) {
@@ -39,6 +41,7 @@ const UI = {
             c.appendChild(p);
         }
     },
+
     renderSignupForm() {
         document.getElementById("signupSection").innerHTML = `
             <h3>Event Registration</h3>
@@ -66,6 +69,7 @@ const UI = {
         document.getElementById("signupBtn").addEventListener("click", () => App.handleSignup());
         document.getElementById("username").addEventListener("keydown", e => { if (e.key === "Enter") App.handleSignup(); });
     },
+
     _onClassChange() {
         const cls = document.getElementById("classSelect").value;
         const ss = document.getElementById("specSelect");
@@ -76,8 +80,11 @@ const UI = {
             Object.keys(SPEC_DATA[cls]).forEach(spec => {
                 const o = document.createElement("option"); o.value = spec; o.textContent = spec; ss.appendChild(o);
             });
+            const specs = Object.keys(SPEC_DATA[cls]);
+            if (specs.length === 1) { ss.value = specs[0]; this._onSpecChange(); }
         }
     },
+
     _onSpecChange() {
         const cls = document.getElementById("classSelect").value;
         const spec = document.getElementById("specSelect").value;
@@ -86,34 +93,52 @@ const UI = {
             const role = SPEC_DATA[cls][spec];
             const labels = { Tank: "Tank", Healer: "Healer", Melee: "Melee DPS", Ranged: "Ranged DPS" };
             rd.textContent = `Role: ${labels[role] || role}`; rd.className = `derived-role ${role.toLowerCase()}`;
-        } else {
-            rd.textContent = "Select a class and spec to see your role"; rd.className = "derived-role";
-        }
+        } else { rd.textContent = "Select a class and spec to see your role"; rd.className = "derived-role"; }
     },
+
     renderRoster(players) {
         const rv = document.getElementById("rosterView"); rv.style.display = "grid";
         document.getElementById("groupView").style.display = "none";
         const tanks = players.filter(p => p.role === "Tank");
         const healers = players.filter(p => p.role === "Healer");
         const dps = players.filter(p => p.role === "Melee" || p.role === "Ranged");
+
+        // Group estimate and role needs
         const possibleGroups = Math.min(tanks.length, healers.length, Math.floor(dps.length / 3));
         const totalPlayers = players.length;
+
         let needsHtml = "";
         const needs = [];
         if (tanks.length < healers.length || tanks.length < Math.floor(dps.length / 3)) needs.push("Tanks");
         if (healers.length < tanks.length || healers.length < Math.floor(dps.length / 3)) needs.push("Healers");
         if (dps.length < 3 && tanks.length > 0 && healers.length > 0) needs.push("DPS");
-        if (totalPlayers > 0 && needs.length > 0) needsHtml = `<div class="role-needs">We need more <strong>${needs.join(" & ")}</strong> to form more groups!</div>`;
-        const summaryHtml = totalPlayers > 0 ? `<div class="group-estimate">${totalPlayers} players signed up — Can form <strong>${possibleGroups}</strong> group${possibleGroups !== 1 ? 's' : ''}${possibleGroups > 0 ? '' : ' yet'}</div>` : '';
+
+        if (totalPlayers > 0 && needs.length > 0) {
+            needsHtml = `<div class="role-needs">We need more <strong>${needs.join(" & ")}</strong> to form more groups!</div>`;
+        }
+
+        const summaryHtml = totalPlayers > 0
+            ? `<div class="group-estimate">${totalPlayers} players signed up — Can form <strong>${possibleGroups}</strong> group${possibleGroups !== 1 ? 's' : ''}${possibleGroups > 0 ? '' : ' yet'}</div>`
+            : '';
+
         rv.innerHTML = `
             <div style="grid-column: 1 / -1;">${summaryHtml}${needsHtml}</div>
             <div class="roster-col"><h4 style="color:${ROLE_COLORS.Tank}">TANKS</h4><div class="count">${tanks.length} signed up</div><div id="tankList"></div></div>
             <div class="roster-col"><h4 style="color:${ROLE_COLORS.Healer}">HEALERS</h4><div class="count">${healers.length} signed up</div><div id="healList"></div></div>
-            <div class="roster-col"><h4 style="color:#ABD473">DPS</h4><div class="count">${dps.length} signed up</div><div id="dpsList"></div></div>`;
+            <div class="roster-col"><h4 style="color:#ABD473">DPS</h4><div class="count">${dps.length} signed up</div><div id="dpsList"></div></div>
+        `;
         tanks.forEach(p => document.getElementById("tankList").appendChild(this._playerDiv(p)));
         healers.forEach(p => document.getElementById("healList").appendChild(this._playerDiv(p)));
         dps.forEach(p => document.getElementById("dpsList").appendChild(this._playerDiv(p)));
     },
+
+    renderGroups(groups, bench) {
+        document.getElementById("rosterView").style.display = "none";
+        const gv = document.getElementById("groupView"); gv.style.display = "grid"; gv.innerHTML = "";
+        groups.forEach((g, i) => this._createGroupCard(gv, i, `NightOwls Squad ${i + 1}`, g.members || g));
+        if (bench && bench.length > 0) this._createGroupCard(gv, -1, "Waitlist / Bench", bench);
+    },
+
     renderSavedGroups(players) {
         const gm = {}, bench = [];
         players.forEach(p => {
@@ -122,17 +147,23 @@ const UI = {
         });
         document.getElementById("rosterView").style.display = "none";
         const gv = document.getElementById("groupView"); gv.style.display = "grid"; gv.innerHTML = "";
-        Object.keys(gm).sort((a, b) => Number(a) - Number(b)).forEach(idx => this._createGroupCard(gv, parseInt(idx), `NightOwls Squad ${parseInt(idx) + 1}`, gm[idx]));
+        Object.keys(gm).sort((a, b) => Number(a) - Number(b)).forEach(idx => {
+            this._createGroupCard(gv, parseInt(idx), `NightOwls Squad ${parseInt(idx) + 1}`, gm[idx]);
+        });
         if (bench.length > 0) this._createGroupCard(gv, -1, "Waitlist / Bench", bench);
     },
+
     _createGroupCard(container, index, title, members) {
         const div = document.createElement("div");
         div.className = "dungeon-group";
         div.dataset.groupIndex = index === -1 ? "Bench" : String(index);
-        div.style.borderTopColor = index === -1 ? "#555" : CONFIG.GROUP_COLORS[index % CONFIG.GROUP_COLORS.length];
+        if (index === -1) { div.style.borderTopColor = "#555"; div.style.background = "rgba(30,30,40,0.8)"; }
+        else { div.style.borderTopColor = CONFIG.GROUP_COLORS[index % CONFIG.GROUP_COLORS.length]; }
+
         const h4 = document.createElement("h4");
         h4.style.color = index === -1 ? "#888" : CONFIG.GROUP_COLORS[index % CONFIG.GROUP_COLORS.length];
         h4.textContent = title; div.appendChild(h4);
+
         if (index !== -1) {
             const badges = document.createElement("div"); badges.className = "group-badges";
             let gl = false, gb = false;
@@ -141,6 +172,7 @@ const UI = {
                 + (gb ? '<span class="badge badge-brez">B-Rez</span>' : '<span class="badge badge-missing">No B-Rez</span>');
             div.appendChild(badges);
         }
+
         const roleOrder = { Tank: 1, Healer: 2, Melee: 3, Ranged: 4 };
         const sorted = [...members].sort((a, b) => (roleOrder[a.role] || 5) - (roleOrder[b.role] || 5));
         let curHeader = "";
@@ -152,22 +184,33 @@ const UI = {
             }
             div.appendChild(this._playerDiv(p));
         });
+
         div.addEventListener("dragover", e => { e.preventDefault(); div.classList.add("drag-over"); });
         div.addEventListener("dragleave", () => div.classList.remove("drag-over"));
         div.addEventListener("drop", e => DragDrop.handleDrop(e, div));
         container.appendChild(div);
     },
+
     _playerDiv(p) {
         const cls = p.wow_class || p.cls;
         const div = document.createElement("div"); div.className = "player";
-        div.dataset.role = p.role; div.dataset.cls = cls; div.dataset.username = p.username; div.dataset.spec = p.specialization || "";
+        div.dataset.role = p.role; div.dataset.cls = cls;
+        div.dataset.username = p.username; div.dataset.spec = p.specialization || "";
+
+        // Check attendance data
         const attendance = App.attendanceMap ? App.attendanceMap[p.username.toLowerCase()] : null;
         const attendBadge = attendance ? `<span class="attendance-badge" title="${attendance.events} events attended">${attendance.events}x</span>` : '';
-        div.innerHTML = `<span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span>
-            <span class="player-right"><span class="player-spec">${p.specialization || cls}</span>
-            <button class="player-remove" onclick="App.removePlayer('${p.username.replace(/'/g, "\\'")}')" title="Remove ${p.username}">&times;</button></span>`;
+
+        div.innerHTML = `
+            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span>
+            <span class="player-right">
+                <span class="player-spec">${p.specialization || cls}</span>
+                <button class="player-remove" onclick="App.removePlayer('${p.username.replace(/'/g, "\\'")}')" title="Remove ${p.username}">&times;</button>
+            </span>
+        `;
         return div;
     },
+
     showLocked() {
         document.getElementById("signupSection").style.display = "none";
         const m = document.getElementById("lockedMessage"); m.style.display = "block";

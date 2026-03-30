@@ -1,13 +1,15 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, func
 from app.database import get_db
-from app.models.models import ArchivedPlayer, EventState, Player
+from app.models.models import Player, EventState, ArchivedPlayer
 from app.models.schemas import AdminRequest
 
 router = APIRouter()
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "nightowls2024")
+
+# Trusted admin IPs — these get auto-logged in without a password
 TRUSTED_IPS = os.getenv("TRUSTED_IPS", "47.204.191.93").split(",")
 
 
@@ -18,11 +20,17 @@ def _verify_password(password: str):
 
 @router.get("/check-ip")
 async def check_ip(request: Request):
+    """Check if the visitor's IP is a trusted admin IP. Returns password for auto-login."""
     client_ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
     if not client_ip:
         client_ip = request.client.host if request.client else ""
     is_admin = client_ip in TRUSTED_IPS
-    return {"ip": client_ip, "is_admin": is_admin, "token": ADMIN_PASSWORD if is_admin else None}
+    # If trusted IP, return the password so the frontend can use it for API calls
+    return {
+        "ip": client_ip,
+        "is_admin": is_admin,
+        "token": ADMIN_PASSWORD if is_admin else None,
+    }
 
 
 @router.post("/verify")
