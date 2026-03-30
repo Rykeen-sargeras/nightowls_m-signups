@@ -12,7 +12,7 @@ const UI = {
         const now = new Date();
         const day = now.getDay(), hour = now.getHours(), min = now.getMinutes();
         if (day === CONFIG.EVENT_DAY && (hour > CONFIG.EVENT_HOUR || (hour === CONFIG.EVENT_HOUR && min >= CONFIG.EVENT_MIN))) {
-            document.getElementById("timerText").innerHTML = `${CONFIG.DISCORD_MSG} Watch <a href="${CONFIG.TWITCH_URL}" target="_blank">Plated on Twitch</a>`;
+            document.getElementById("timerText").innerHTML = `<span class="timer-label">${CONFIG.DISCORD_MSG}</span><span class="timer-live-copy">Watch <a href="${CONFIG.TWITCH_URL}" target="_blank" rel="noopener noreferrer">Plated on Twitch</a></span>`;
             return;
         }
         const target = new Date(now);
@@ -24,7 +24,15 @@ const UI = {
         const h = Math.floor((diff % 86400000) / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
-        document.getElementById("timerText").innerHTML = `Next Mythic+ Event: <span class="timer-digits">${d}d</span><span class="timer-sep">:</span><span class="timer-digits">${String(h).padStart(2,'0')}h</span><span class="timer-sep">:</span><span class="timer-digits">${String(m).padStart(2,'0')}m</span><span class="timer-sep">:</span><span class="timer-digits">${String(s).padStart(2,'0')}s</span>`;
+        const dayUnit = d === 1 ? 'day' : 'days';
+        document.getElementById("timerText").innerHTML = `
+            <span class="timer-label">Next Mythic+ Event</span>
+            <span class="timer-countdown" aria-label="Countdown to next Mythic Plus event">
+                <span class="timer-segment"><span class="timer-digits">${d}</span><span class="timer-unit">${dayUnit}</span></span>
+                <span class="timer-segment"><span class="timer-digits">${String(h).padStart(2,'0')}</span><span class="timer-unit">hr</span></span>
+                <span class="timer-segment"><span class="timer-digits">${String(m).padStart(2,'0')}</span><span class="timer-unit">min</span></span>
+                <span class="timer-segment"><span class="timer-digits">${String(s).padStart(2,'0')}</span><span class="timer-unit">sec</span></span>
+            </span>`;
     },
 
     initParticles() {
