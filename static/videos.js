@@ -101,7 +101,7 @@ const VideoManager = {
                 ${embedUrl ? `<div class="video-expanded-player">
                     <iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>` : `<div class="video-expanded-player"><a href="${video.youtube_url}" target="_blank">Watch on YouTube</a></div>`}
-                ${video.description ? `<div class="video-expanded-desc">${video.description.replace(/\n/g, '<br>')}</div>` : ''}
+                ${video.description ? `<div class="video-expanded-desc">${video.description}</div>` : ''}
             </div>
         `;
 
