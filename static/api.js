@@ -4,6 +4,27 @@
 const API = {
     _token: null,
 
+    async _parseResponse(res, fallbackMessage = "Request failed") {
+        const text = await res.text();
+        let data = null;
+
+        try {
+            data = text ? JSON.parse(text) : null;
+        } catch (_) {
+            data = null;
+        }
+
+        if (!res.ok) {
+            throw new Error(
+                (data && (data.detail || data.message)) ||
+                text ||
+                fallbackMessage
+            );
+        }
+
+        return data;
+    },
+
     _headers() {
         const h = { "Content-Type": "application/json" };
         if (this._token) h["Authorization"] = `Bearer ${this._token}`;
@@ -20,18 +41,14 @@ const API = {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Registration failed");
-        return data;
+        return await this._parseResponse(res, "Registration failed");
     },
     async login(username, password) {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/login`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Login failed");
-        return data;
+        return await this._parseResponse(res, "Login failed");
     },
     async getMe() {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/me`, { headers: this._headers() });
@@ -43,27 +60,21 @@ const API = {
             method: "POST", headers: this._headers(),
             body: JSON.stringify({ new_password: newPassword }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Change failed");
-        return data;
+        return await this._parseResponse(res, "Change failed");
     },
     async getMemberList(adminPassword) {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/members`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ admin_password: adminPassword }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Failed to load members");
-        return data;
+        return await this._parseResponse(res, "Failed to load members");
     },
     async resetMemberPassword(adminPassword, userId) {
         const res = await fetch(`${CONFIG.API_URL}/api/auth/reset-password`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ admin_password: adminPassword, user_id: userId }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Reset failed");
-        return data;
+        return await this._parseResponse(res, "Reset failed");
     },
 
     // --- ADMIN ---
@@ -77,36 +88,28 @@ const API = {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Verification failed");
-        return data;
+        return await this._parseResponse(res, "Verification failed");
     },
     async adminLock(password) {
         const res = await fetch(`${CONFIG.API_URL}/api/admin/lock`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Lock failed");
-        return data;
+        return await this._parseResponse(res, "Lock failed");
     },
     async adminUnlock(password) {
         const res = await fetch(`${CONFIG.API_URL}/api/admin/unlock`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Unlock failed");
-        return data;
+        return await this._parseResponse(res, "Unlock failed");
     },
     async adminArchive(password) {
         const res = await fetch(`${CONFIG.API_URL}/api/admin/archive`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Archive failed");
-        return data;
+        return await this._parseResponse(res, "Archive failed");
     },
 
     // --- PLAYERS ---
@@ -125,15 +128,11 @@ const API = {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, wow_class: wowClass, specialization }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Signup failed");
-        return data;
+        return await this._parseResponse(res, "Signup failed");
     },
     async cancelSignup(username) {
         const res = await fetch(`${CONFIG.API_URL}/api/signup/${encodeURIComponent(username)}`, { method: "DELETE" });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Cancel failed");
-        return data;
+        return await this._parseResponse(res, "Cancel failed");
     },
     async fetchAttendance() {
         const res = await fetch(`${CONFIG.API_URL}/api/attendance`);
@@ -145,9 +144,7 @@ const API = {
             method: "DELETE", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Delete failed");
-        return data;
+        return await this._parseResponse(res, "Delete failed");
     },
 
     // --- GROUPS ---
@@ -156,18 +153,14 @@ const API = {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Sort failed");
-        return data;
+        return await this._parseResponse(res, "Sort failed");
     },
     async saveGroups(password, groupMap) {
         const res = await fetch(`${CONFIG.API_URL}/api/groups/save`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password, groups: groupMap }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Save failed");
-        return data;
+        return await this._parseResponse(res, "Save failed");
     },
 
     // --- VIDEOS ---
@@ -181,27 +174,21 @@ const API = {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password, category, boss_name, description, youtube_url, sort_order }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Create failed");
-        return data;
+        return await this._parseResponse(res, "Create failed");
     },
     async updateVideo(password, videoId, updates) {
         const res = await fetch(`${CONFIG.API_URL}/api/videos/${videoId}`, {
             method: "PUT", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password, ...updates }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Update failed");
-        return data;
+        return await this._parseResponse(res, "Update failed");
     },
     async deleteVideo(password, videoId) {
         const res = await fetch(`${CONFIG.API_URL}/api/videos/${videoId}`, {
             method: "DELETE", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ password }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Delete failed");
-        return data;
+        return await this._parseResponse(res, "Delete failed");
     },
 
     // --- COMMUNITY PROFILES ---
@@ -215,35 +202,27 @@ const API = {
             method: "POST", headers: this._headers(),
             body: JSON.stringify(profileData),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Create failed");
-        return data;
+        return await this._parseResponse(res, "Create failed");
     },
     async updateProfile(profileData) {
         const res = await fetch(`${CONFIG.API_URL}/api/community/`, {
             method: "PUT", headers: this._headers(),
             body: JSON.stringify(profileData),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Update failed");
-        return data;
+        return await this._parseResponse(res, "Update failed");
     },
     async deleteProfile(profileId) {
         const res = await fetch(`${CONFIG.API_URL}/api/community/${profileId}`, {
             method: "DELETE", headers: this._headers(),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Delete failed");
-        return data;
+        return await this._parseResponse(res, "Delete failed");
     },
     async updateSeed(userId, seed) {
         const res = await fetch(`${CONFIG.API_URL}/api/community/seed`, {
             method: "PUT", headers: this._headers(),
             body: JSON.stringify({ user_id: userId, seed }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Seed update failed");
-        return data;
+        return await this._parseResponse(res, "Seed update failed");
     },
 
     // --- SITE CONTENT ---
@@ -257,8 +236,6 @@ const API = {
             method: "PUT", headers: this._headers(),
             body: JSON.stringify({ value }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Update failed");
-        return data;
+        return await this._parseResponse(res, "Update failed");
     },
 };

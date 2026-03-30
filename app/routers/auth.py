@@ -80,24 +80,27 @@ async def require_admin(authorization: Optional[str] = Header(None), db: AsyncSe
 
 @router.post("/register")
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).where(User.username.ilike(req.username)))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Username already taken")
-
     try:
-        pw_hash = hash_password(req.password)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Password hashing failed: {str(e)}")
+        existing = await db.execute(select(User).where(User.username.ilike(req.username.strip())))
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Username already taken")
 
-    user = User(
-        username=req.username,
-        password_hash=pw_hash,
-        is_admin=False,
-        password_reset_required=False,
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+        pw_hash = hash_password(req.password)
+
+        user = User(
+            username=req.username.strip(),
+            password_hash=pw_hash,
+            is_admin=False,
+            password_reset_required=False,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Register failed: {str(e)}")
 
     token = create_token(user.id, user.username, user.is_admin)
     return {
@@ -110,8 +113,12 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login")
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.username.ilike(req.username)))
-    user = result.scalar_one_or_none()
+    try:
+        result = await db.execute(select(User).where(User.username.ilike(req.username.strip())))
+        user = result.scalar_one_or_none()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Login query failed: {str(e)}")
+
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 

@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
@@ -10,10 +11,23 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+
+async def ensure_users_schema():
+    async with engine.begin() as conn:
+        await conn.execute(text("""
+            ALTER TABLE IF EXISTS users
+            ADD COLUMN IF NOT EXISTS password_hash VARCHAR(128),
+            ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS password_reset_required BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()
+        """))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await ensure_users_schema()
     start_scheduler()
     yield
     stop_scheduler()
