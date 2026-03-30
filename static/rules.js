@@ -21,13 +21,30 @@ const RulesManager = {
         this.render();
     },
 
+    escapeHtml(str) {
+        return String(str || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    },
+
+    renderRulesMarkup(text) {
+        if (!text) return "";
+        const escaped = this.escapeHtml(text);
+        const withColors = escaped.replace(/\[color=(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)\]([\s\S]*?)\[\/color\]/g, (match, color, content) => {
+            return `<span style="color:${color};">${content}</span>`;
+        });
+        return withColors.replace(/\n/g, '<br>');
+    },
+
     render() {
         const container = document.getElementById("rulesContent");
         if (!container) return;
 
         const isAdmin = AuthManager.isAdmin();
 
-        // Banner
         const bannerArea = document.getElementById("rulesBannerArea");
         if (bannerArea) {
             if (this.banner) {
@@ -40,14 +57,12 @@ const RulesManager = {
             }
         }
 
-        // Rules content
         if (this.rulesText) {
-            container.innerHTML = `<div class="rules-text">${this.rulesText.replace(/\n/g, '<br>')}</div>`;
+            container.innerHTML = `<div class="rules-text">${this.renderRulesMarkup(this.rulesText)}</div>`;
         } else {
             container.innerHTML = '<div class="video-empty">No rules have been set yet.</div>';
         }
 
-        // Admin edit button
         if (isAdmin) {
             container.innerHTML += `<button class="btn btn-sm btn-secondary" onclick="RulesManager.showEditor()" style="width:auto;display:inline-block;margin-top:15px;">Edit Rules</button>`;
         }
@@ -56,17 +71,63 @@ const RulesManager = {
     showEditor() {
         const container = document.getElementById("rulesContent");
         container.innerHTML = `
-            <div class="video-form">
+            <div class="video-form rules-editor-shell">
                 <h4>Edit Community Rules</h4>
-                <div class="form-group"><label for="rulesEditor">Rules Content (use line breaks for formatting)</label>
+                <div class="rules-editor-toolbar">
+                    <div class="rules-toolbar-group">
+                        <span class="rules-toolbar-label">Color selected text</span>
+                        <input type="color" id="rulesColorPicker" class="rules-color-input" value="#ffd100">
+                        <button class="btn btn-sm btn-secondary" style="width:auto;display:inline-block;" onclick="RulesManager.applySelectedColor()">Apply Color</button>
+                        <button class="btn btn-sm btn-secondary" style="width:auto;display:inline-block;" onclick="RulesManager.clearSelectedColor()">Clear Color</button>
+                    </div>
+                </div>
+                <div class="form-group"><label for="rulesEditor">Rules Content</label>
                     <textarea id="rulesEditor"></textarea></div>
-                <div style="display:flex;gap:8px;">
+                <div class="rules-editor-help">Highlight text in the editor, pick a color, then use Apply Color. Colored text saves with the rules and only the editor shows these color controls.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <button class="btn btn-sm btn-success" onclick="RulesManager.saveRules()">Save Rules</button>
                     <button class="btn btn-sm btn-secondary" onclick="RulesManager.render()">Cancel</button>
                 </div>
             </div>
         `;
         document.getElementById("rulesEditor").value = this.rulesText;
+    },
+
+    applySelectedColor() {
+        const textarea = document.getElementById("rulesEditor");
+        const color = document.getElementById("rulesColorPicker")?.value || "#ffd100";
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        if (start === end) {
+            UI.toast("Highlight the text you want to color first", "error");
+            return;
+        }
+
+        const selected = textarea.value.slice(start, end);
+        const wrapped = `[color=${color}]${selected}[/color]`;
+        textarea.setRangeText(wrapped, start, end, "end");
+        textarea.focus();
+    },
+
+    clearSelectedColor() {
+        const textarea = document.getElementById("rulesEditor");
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        if (start === end) {
+            UI.toast("Highlight colored text to clear it", "error");
+            return;
+        }
+
+        const selected = textarea.value.slice(start, end);
+        const cleaned = selected
+            .replace(/\[color=(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)\]/g, "")
+            .replace(/\[\/color\]/g, "");
+        textarea.setRangeText(cleaned, start, end, "end");
+        textarea.focus();
     },
 
     async saveRules() {
