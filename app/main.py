@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from app.database import engine, Base
-from app.routers import players, admin, groups, videos, auth, community, content
+from app.routers import players, admin, groups, videos, auth, community, content, attendance
 from app.services.scheduler import start_scheduler, stop_scheduler
 import os
 import logging
@@ -143,6 +143,7 @@ app.include_router(groups.router, prefix="/api/groups", tags=["Groups"])
 app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
 app.include_router(community.router, prefix="/api/community", tags=["Community"])
 app.include_router(content.router, prefix="/api/content", tags=["Content"])
+app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
 
 # Serve static files
 static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
