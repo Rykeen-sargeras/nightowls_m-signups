@@ -135,7 +135,7 @@ const API = {
         return await this._parseResponse(res, "Cancel failed");
     },
     async fetchAttendance() {
-        const res = await fetch(`${CONFIG.API_URL}/api/attendance`);
+        const res = await fetch(`${CONFIG.API_URL}/api/attendance/`);
         if (!res.ok) throw new Error("Failed to load attendance");
         return await res.json();
     },

@@ -1,4 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import RedirectResponse
 from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -134,6 +137,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="NightOwls Mythic+ API", version="2.0.0", lifespan=lifespan)
+
+
+# Middleware to fix redirect URLs behind HTTPS proxy (Koyeb/Railway)
+# FastAPI's trailing-slash redirects default to http:// when behind a proxy
+class ForceHTTPSRedirectMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if response.status_code in (301, 302, 307, 308):
+            location = response.headers.get("location", "")
+            if location.startswith("http://") and request.headers.get("x-forwarded-proto") == "https":
+                response.headers["location"] = location.replace("http://", "https://", 1)
+        return response
+
+
+app.add_middleware(ForceHTTPSRedirectMiddleware)
 
 # API routes
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
