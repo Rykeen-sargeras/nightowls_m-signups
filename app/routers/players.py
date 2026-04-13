@@ -1,62 +1,32 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 from app.database import get_db
-from app.models.models import Player, EventState, ArchivedPlayer
+from app.models.models import Player, EventState
 from app.models.schemas import (
     SignupRequest, SignupResponse, PlayerOut, RosterResponse,
-    ClassSpecResponse, AdminRequest, VALID_SPECS, get_specs_for_class
+    ClassSpecResponse, VALID_SPECS, get_specs_for_class
 )
 
 router = APIRouter()
 
 
+def _assign_signup_numbers(players) -> list[PlayerOut]:
+    """
+    Takes a list of Player ORM objects (already sorted by signed_up_at)
+    and returns PlayerOut models with signup_number assigned sequentially.
+    """
+    result = []
+    for i, p in enumerate(players, start=1):
+        out = PlayerOut.model_validate(p)
+        out.signup_number = i
+        result.append(out)
+    return result
+
+
 @router.get("/specs", response_model=ClassSpecResponse)
 async def get_class_specs():
     return ClassSpecResponse(classes=VALID_SPECS)
-
-
-@router.get("/attendance")
-async def get_attendance(db: AsyncSession = Depends(get_db)):
-    """Get attendance counts from archived events per player."""
-    result = await db.execute(
-        select(
-            ArchivedPlayer.username,
-            func.count(ArchivedPlayer.id).label("events"),
-            func.max(ArchivedPlayer.event_date).label("last_event"),
-        ).group_by(ArchivedPlayer.username)
-        .order_by(func.count(ArchivedPlayer.id).desc())
-    )
-    rows = result.all()
-    return {
-        "attendance": [
-            {
-                "username": row.username,
-                "events": row.events,
-                "last_event": row.last_event.isoformat() if row.last_event else None,
-            }
-            for row in rows
-        ]
-    }
-
-
-@router.delete("/attendance/{username}")
-async def delete_attendance(username: str, req: AdminRequest, db: AsyncSession = Depends(get_db)):
-    """Delete all archived records for a player (admin only)."""
-    from app.routers.admin import _verify_password
-    _verify_password(req.password)
-
-    result = await db.execute(
-        select(ArchivedPlayer).where(ArchivedPlayer.username.ilike(username))
-    )
-    records = result.scalars().all()
-    if not records:
-        raise HTTPException(status_code=404, detail="No attendance records found")
-
-    for r in records:
-        await db.delete(r)
-    await db.commit()
-    return {"success": True, "message": f"Deleted {len(records)} records for {username}"}
 
 
 @router.get("/roster", response_model=RosterResponse)
@@ -65,7 +35,7 @@ async def get_roster(db: AsyncSession = Depends(get_db)):
     players = result.scalars().all()
     state = await _get_event_state(db)
     return RosterResponse(
-        players=[PlayerOut.model_validate(p) for p in players],
+        players=_assign_signup_numbers(players),
         is_locked=state.is_locked if state else False,
     )
 
@@ -90,10 +60,19 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
     db.add(player)
     await db.commit()
     await db.refresh(player)
+
+    # Get the signup number for this new player
+    all_players = await db.execute(select(Player).order_by(Player.signed_up_at))
+    all_list = all_players.scalars().all()
+    signup_num = next((i for i, p in enumerate(all_list, 1) if p.id == player.id), 0)
+
+    out = PlayerOut.model_validate(player)
+    out.signup_number = signup_num
+
     return SignupResponse(
         success=True,
-        message=f"{req.username} signed up as {req.wow_class} {req.specialization} ({role})",
-        player=PlayerOut.model_validate(player),
+        message=f"#{signup_num} — {req.username} signed up as {req.wow_class} {req.specialization} ({role})",
+        player=out,
     )
 
 
@@ -110,7 +89,7 @@ async def cancel_signup(username: str, db: AsyncSession = Depends(get_db)):
 
     await db.delete(player)
     await db.commit()
-    return SignupResponse(success=True, message=f"{username} removed")
+    return SignupResponse(success=True, message=f"{username} removed from signup")
 
 
 async def _get_event_state(db: AsyncSession) -> EventState | None:

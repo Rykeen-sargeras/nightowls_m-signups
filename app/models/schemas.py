@@ -2,10 +2,10 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 
-# Full WoW Class → Spec → Role mapping from the spec chart
+# Full WoW Class → Spec → Role mapping
 VALID_SPECS: dict[str, dict[str, str]] = {
     "Death Knight": {"Blood": "Tank", "Frost": "Melee", "Unholy": "Melee"},
-    "Demon Hunter": {"Devourer": "Ranged", "Havoc": "Melee", "Vengeance": "Tank"},
+    "Demon Hunter": {"Havoc": "Melee", "Vengeance": "Tank"},
     "Druid": {"Balance": "Ranged", "Feral": "Melee", "Guardian": "Tank", "Restoration": "Healer"},
     "Evoker": {"Augmentation": "Ranged", "Devastation": "Ranged", "Preservation": "Healer"},
     "Hunter": {"Beast Mastery": "Ranged", "Marksmanship": "Ranged", "Survival": "Melee"},
@@ -22,11 +22,14 @@ VALID_SPECS: dict[str, dict[str, str]] = {
 LUST_CLASSES = {"Shaman", "Mage", "Hunter", "Evoker"}
 BREZ_CLASSES = {"Druid", "Paladin", "Warlock", "Death Knight"}
 
+
 def get_specs_for_class(wow_class: str) -> dict[str, str]:
     return VALID_SPECS.get(wow_class, {})
 
+
 def has_lust(wow_class: str) -> bool:
     return wow_class in LUST_CLASSES
+
 
 def has_brez(wow_class: str) -> bool:
     return wow_class in BREZ_CLASSES
@@ -52,10 +55,12 @@ class SignupRequest(BaseModel):
             raise ValueError(f"Invalid class: {v}")
         return v
 
+
 class SignupResponse(BaseModel):
     success: bool
     message: str
     player: Optional["PlayerOut"] = None
+
 
 class PlayerOut(BaseModel):
     id: int
@@ -65,19 +70,25 @@ class PlayerOut(BaseModel):
     role: str
     group_index: str
     signed_up_at: datetime
+    signup_number: int = 0  # assigned by the roster endpoint based on signup order
+
     class Config:
         from_attributes = True
+
 
 class RosterResponse(BaseModel):
     players: list[PlayerOut]
     is_locked: bool
 
+
 class AdminRequest(BaseModel):
     password: str
 
+
 class SaveGroupsRequest(BaseModel):
     password: str
-    groups: dict[str, str]
+    groups: dict[str, str]  # { "PlayerName": "0", "OtherPlayer": "Bench" }
+
 
 class ClassSpecResponse(BaseModel):
     classes: dict[str, dict[str, str]]
