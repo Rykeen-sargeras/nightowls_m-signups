@@ -206,7 +206,7 @@ const UI = {
         div.dataset.username = p.username; div.dataset.spec = p.specialization || "";
 
         // Signup order number
-        const signupNum = p.signup_number ? `<span class="signup-num" title="Signup order #${p.signup_number}">#${p.signup_number}</span>` : '';
+        const signupNum = (p.signup_number != null && p.signup_number > 0) ? `<span class="signup-num" title="Signed up #${p.signup_number}">#${p.signup_number}</span>` : '';
 
         div.innerHTML = `
             <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${signupNum}${p.username}</span>

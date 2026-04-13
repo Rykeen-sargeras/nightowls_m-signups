@@ -35,6 +35,9 @@ const App = {
             this.players = data.players;
             this.isLocked = data.is_locked;
 
+            // Assign signup numbers client-side (players already sorted by signed_up_at)
+            this.players.forEach((p, i) => { p.signup_number = i + 1; });
+
             if (this.isLocked) {
                 UI.showLocked();
                 const hasSaved = this.players.some(p => p.group_index && p.group_index !== "");
