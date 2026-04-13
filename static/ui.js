@@ -207,9 +207,10 @@ const UI = {
 
         // Signup order number
         const signupNum = (p.signup_number != null && p.signup_number > 0) ? `<span class="signup-num" title="Signed up #${p.signup_number}">#${p.signup_number}</span>` : '';
+        const benchBadge = p.bench_priority ? `<span class="bench-priority-badge" title="Bench priority — guaranteed spot this week">&#9733;</span>` : '';
 
         div.innerHTML = `
-            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${signupNum}${p.username}</span>
+            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${signupNum}${benchBadge}${p.username}</span>
             <span class="player-right">
                 <span class="player-spec">${p.specialization || cls}</span>
                 <button class="player-remove" onclick="App.removePlayer('${p.username.replace(/'/g, "\\'")}')" title="Remove ${p.username}">&times;</button>

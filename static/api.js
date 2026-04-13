@@ -162,6 +162,18 @@ const API = {
         });
         return await this._parseResponse(res, "Save failed");
     },
+    async discordExport(password) {
+        const res = await fetch(`${CONFIG.API_URL}/api/groups/discord-export`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+        });
+        return await this._parseResponse(res, "Discord export failed");
+    },
+    async fetchBenchPriority() {
+        const res = await fetch(`${CONFIG.API_URL}/api/groups/bench-priority`);
+        if (!res.ok) return { bench_priority: [] };
+        return await res.json();
+    },
 
     // --- VIDEOS ---
     async fetchVideos() {

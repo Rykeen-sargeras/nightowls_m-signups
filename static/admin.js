@@ -49,6 +49,7 @@ const Admin = {
                     <button class="btn btn-sm btn-success" id="btnSave">Save Groups</button>
                 </div>
                 <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
+                <button class="btn btn-sm btn-secondary" id="btnDiscord" style="width:100%;margin-top:4px;">Copy Discord Groups</button>
                 <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show HighScore! Tab</button>
                 <button class="btn btn-sm btn-secondary" id="btnMembers" style="width:100%;margin-top:4px;">Member List</button>
             </div>
@@ -66,6 +67,7 @@ const Admin = {
         document.getElementById("btnUnlock").addEventListener("click", () => this.action("unlock"));
         document.getElementById("btnSave").addEventListener("click", () => this.saveGroups());
         document.getElementById("btnDrag").addEventListener("click", () => DragDrop.toggle());
+        document.getElementById("btnDiscord").addEventListener("click", () => this.discordExport());
         document.getElementById("btnAttendance").addEventListener("click", () => this.showAttendance());
         document.getElementById("btnMembers").addEventListener("click", () => AuthManager.showMemberList());
     },
@@ -143,6 +145,37 @@ const Admin = {
     async showAttendance() {
         TabManager.switchTab("attendance");
         this.log("Switched to HighScore! tab");
+    },
+
+    async discordExport() {
+        const pw = this.getPassword();
+        if (!pw) return UI.toast("Enter admin password", "error");
+        try {
+            const result = await API.discordExport(pw);
+            await navigator.clipboard.writeText(result.discord_text);
+            UI.toast("Discord groups copied to clipboard!");
+            this.log("Discord export copied to clipboard");
+        } catch (err) {
+            // Fallback if clipboard API fails
+            if (err.message === "Discord export failed") {
+                UI.toast(err.message, "error");
+            } else {
+                try {
+                    const result = await API.discordExport(pw);
+                    const ta = document.createElement("textarea");
+                    ta.value = result.discord_text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    UI.toast("Discord groups copied to clipboard!");
+                    this.log("Discord export copied (fallback)");
+                } catch (err2) {
+                    UI.toast(err2.message, "error");
+                    this.log("Discord export failed: " + err2.message);
+                }
+            }
+        }
     },
 };
 

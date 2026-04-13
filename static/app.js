@@ -6,6 +6,7 @@ const App = {
     isLocked: false,
     pollTimer: null,
     attendanceMap: {},
+    benchPriorityNames: new Set(),
 
     async init() {
         UI.initParticles();
@@ -24,6 +25,18 @@ const App = {
         UI.renderSignupForm();
         Admin.init();
         TwitchManager.init();
+
+        // Load bench priority data
+        try {
+            const bpData = await API.fetchBenchPriority();
+            this.benchPriorityNames = new Set(bpData.bench_priority || []);
+            if (this.benchPriorityNames.size > 0) {
+                Admin.log(`Bench priority: ${[...this.benchPriorityNames].join(", ")}`);
+            }
+        } catch (err) {
+            Admin.log("Bench priority load skipped: " + err.message);
+        }
+
         await AuthManager.init();
         await this.refreshRoster();
         this.pollTimer = setInterval(() => this.refreshRoster(), CONFIG.POLL_INTERVAL);
@@ -36,7 +49,10 @@ const App = {
             this.isLocked = data.is_locked;
 
             // Assign signup numbers client-side (players already sorted by signed_up_at)
-            this.players.forEach((p, i) => { p.signup_number = i + 1; });
+            this.players.forEach((p, i) => {
+                p.signup_number = i + 1;
+                p.bench_priority = this.benchPriorityNames.has(p.username);
+            });
 
             if (this.isLocked) {
                 UI.showLocked();

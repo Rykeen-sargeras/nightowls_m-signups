@@ -1,40 +1,46 @@
 """
-NightOwls Smart Group Sorting — V5
+NightOwls Smart Group Sorting — V6
 - Builds 5-man M+ groups: 1 Tank, 1 Healer, 3 DPS
+- BENCH PRIORITY: Players benched last week get guaranteed placement (never benched twice in a row)
 - Prioritizes Lust + Brez coverage per group
 - After utility is satisfied, fills by signup order (first come first served)
-- No more random shuffle — signup_number determines priority
 """
 from app.models.schemas import has_lust, has_brez
 
 
-def auto_sort(players: list[dict]) -> dict:
+def auto_sort(players: list[dict], bench_priority_names: set[str] = None) -> dict:
     """
     Takes a list of player dicts with keys:
         username, wow_class, specialization, role, signed_up_at
     Players MUST be pre-sorted by signed_up_at ascending (earliest first).
+    bench_priority_names: set of usernames who were benched last week (guaranteed placement).
     Returns { "groups": [ [player, ...], ... ], "bench": [player, ...] }
     """
-    # Split into role pools — already sorted by signup order
-    tanks = [p.copy() for p in players if p["role"] == "Tank"]
-    healers = [p.copy() for p in players if p["role"] == "Healer"]
-    melee = [p.copy() for p in players if p["role"] == "Melee"]
-    ranged = [p.copy() for p in players if p["role"] == "Ranged"]
+    if bench_priority_names is None:
+        bench_priority_names = set()
+
+    # Mark players with bench priority
+    for p in players:
+        p["bench_priority"] = p["username"] in bench_priority_names
+
+    # Split into role pools — bench priority players go to the FRONT of each pool
+    tanks = _sort_pool([p.copy() for p in players if p["role"] == "Tank"])
+    healers = _sort_pool([p.copy() for p in players if p["role"] == "Healer"])
+    melee = _sort_pool([p.copy() for p in players if p["role"] == "Melee"])
+    ranged = _sort_pool([p.copy() for p in players if p["role"] == "Ranged"])
 
     groups = []
 
     while tanks and healers and (len(melee) + len(ranged)) >= 3:
         group = []
 
-        # --- 1. Pick the earliest-signed-up Tank ---
+        # --- 1. Pick the first Tank (bench priority first, then signup order) ---
         tank = tanks.pop(0)
         group.append(tank)
 
         # --- 2. Pick a Healer ---
-        # Check what utility the tank already covers
         need_lust = not has_lust(tank["wow_class"])
         need_brez = not has_brez(tank["wow_class"])
-
         healer = _pull_best_healer(healers, need_lust, need_brez)
         group.append(healer)
 
@@ -46,7 +52,6 @@ def auto_sort(players: list[dict]) -> dict:
         for _ in range(3):
             still_need_lust = not grp_lust
             still_need_brez = not grp_brez
-
             dps = _pull_best_dps(melee, ranged, still_need_lust, still_need_brez)
             if dps:
                 group.append(dps)
@@ -55,48 +60,49 @@ def auto_sort(players: list[dict]) -> dict:
 
         groups.append(group)
 
-    # Everyone left over goes to bench — already in signup order
     bench = tanks + healers + _merge_by_signup(melee, ranged)
     return {"groups": groups, "bench": bench}
 
 
+def _sort_pool(pool: list[dict]) -> list[dict]:
+    """Bench priority players first (in signup order), then normal (in signup order)."""
+    priority = [p for p in pool if p.get("bench_priority")]
+    normal = [p for p in pool if not p.get("bench_priority")]
+    return priority + normal
+
+
 def _pull_best_healer(healers: list[dict], need_lust: bool, need_brez: bool) -> dict:
-    """
-    Pick the best healer for utility coverage.
-    Priority: covers BOTH gaps > covers ONE gap > earliest signup.
-    Within each priority tier, earliest signup wins.
-    """
     if not healers:
         return None
 
-    # Try to find one that covers both
+    # Bench-priority healer that covers utility
+    if need_lust or need_brez:
+        for i, h in enumerate(healers):
+            if h.get("bench_priority"):
+                if (need_lust and has_lust(h["wow_class"])) or (need_brez and has_brez(h["wow_class"])):
+                    return healers.pop(i)
+
+    # Covers both gaps
     if need_lust and need_brez:
         for i, h in enumerate(healers):
             if has_lust(h["wow_class"]) and has_brez(h["wow_class"]):
                 return healers.pop(i)
 
-    # Try to find one that covers at least one gap
+    # Covers at least one gap
     if need_lust or need_brez:
         for i, h in enumerate(healers):
             if (need_lust and has_lust(h["wow_class"])) or (need_brez and has_brez(h["wow_class"])):
                 return healers.pop(i)
 
-    # No utility needed or nobody has it — take the earliest signup
+    # First in pool (bench priority already at front)
     return healers.pop(0)
 
 
-def _pull_best_dps(melee: list[dict], ranged: list[dict],
-                   need_lust: bool, need_brez: bool) -> dict | None:
-    """
-    Pick the best DPS for utility coverage.
-    If utility is still needed, scan both pools for a provider (earliest signup first).
-    If utility is covered, just take the overall earliest signup across both pools.
-    """
-    # --- Utility needed: find the earliest signup that covers a gap ---
+def _pull_best_dps(melee, ranged, need_lust, need_brez):
     if need_lust or need_brez:
         best_idx = None
         best_pool = None
-        best_time = None
+        best_score = None
 
         for pool in [melee, ranged]:
             for i, p in enumerate(pool):
@@ -109,21 +115,19 @@ def _pull_best_dps(melee: list[dict], ranged: list[dict],
                     covers = has_brez(p["wow_class"])
 
                 if covers:
-                    p_time = p.get("signed_up_at")
-                    if best_time is None or (p_time and p_time < best_time):
+                    score = (0 if p.get("bench_priority") else 1, p.get("signed_up_at", ""))
+                    if best_score is None or score < best_score:
                         best_idx = i
                         best_pool = pool
-                        best_time = p_time
+                        best_score = score
 
         if best_pool is not None and best_idx is not None:
             return best_pool.pop(best_idx)
 
-    # --- Utility covered (or nobody left has it): earliest signup wins ---
     return _pull_earliest(melee, ranged)
 
 
-def _pull_earliest(melee: list[dict], ranged: list[dict]) -> dict | None:
-    """Pull the player with the earliest signed_up_at from either pool."""
+def _pull_earliest(melee, ranged):
     if not melee and not ranged:
         return None
     if not melee:
@@ -131,15 +135,15 @@ def _pull_earliest(melee: list[dict], ranged: list[dict]) -> dict | None:
     if not ranged:
         return melee.pop(0)
 
-    # Both have players — compare the front of each (already sorted by signup)
-    if melee[0].get("signed_up_at", "") <= ranged[0].get("signed_up_at", ""):
+    m_score = (0 if melee[0].get("bench_priority") else 1, melee[0].get("signed_up_at", ""))
+    r_score = (0 if ranged[0].get("bench_priority") else 1, ranged[0].get("signed_up_at", ""))
+    if m_score <= r_score:
         return melee.pop(0)
     else:
         return ranged.pop(0)
 
 
-def _merge_by_signup(melee: list[dict], ranged: list[dict]) -> list[dict]:
-    """Merge two sorted lists into one sorted list by signed_up_at."""
+def _merge_by_signup(melee, ranged):
     result = []
     i, j = 0, 0
     while i < len(melee) and j < len(ranged):
