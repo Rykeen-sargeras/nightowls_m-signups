@@ -205,12 +205,11 @@ const UI = {
         div.dataset.role = p.role; div.dataset.cls = cls;
         div.dataset.username = p.username; div.dataset.spec = p.specialization || "";
 
-        // Check attendance data
-        const attendance = App.attendanceMap ? App.attendanceMap[p.username.toLowerCase()] : null;
-        const attendBadge = attendance ? `<span class="attendance-badge" title="${attendance.events} events attended">${attendance.events}x</span>` : '';
+        // Signup order number
+        const signupNum = p.signup_number ? `<span class="signup-num" title="Signup order #${p.signup_number}">#${p.signup_number}</span>` : '';
 
         div.innerHTML = `
-            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${p.username}${attendBadge}</span>
+            <span class="player-name" style="color:${CLASS_COLORS[cls] || '#FFF'}">${signupNum}${p.username}</span>
             <span class="player-right">
                 <span class="player-spec">${p.specialization || cls}</span>
                 <button class="player-remove" onclick="App.removePlayer('${p.username.replace(/'/g, "\\'")}')" title="Remove ${p.username}">&times;</button>

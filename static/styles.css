@@ -294,6 +294,24 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .badge-missing { background: rgba(255, 68, 68, 0.2); color: #ff6b6b; border: 1px solid rgba(255,68,68,0.3); }
 .role-header { font-size: 0.7em; text-transform: uppercase; color: #666; margin-top: 10px; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Cinzel', serif; letter-spacing: 1px; }
 
+/* === SIGNUP ORDER BADGE === */
+.signup-num {
+    display: inline-block;
+    font-size: 0.65em;
+    font-weight: 700;
+    color: #ffd100;
+    background: rgba(255, 209, 0, 0.12);
+    border: 1px solid rgba(255, 209, 0, 0.25);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-right: 5px;
+    font-family: 'Lato', sans-serif;
+    min-width: 24px;
+    text-align: center;
+    vertical-align: middle;
+    letter-spacing: 0;
+}
+
 /* === PLAYERS === */
 .player { padding: 7px 5px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel', serif; letter-spacing: 0.5px; font-size: 0.9em; transition: background 0.2s; }
 .player:hover { background: rgba(255,255,255,0.03); }
@@ -673,6 +691,32 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .player.dragging { opacity: 0.4; background: rgba(255, 215, 0, 0.15); border: 1px dashed var(--wow-gold); border-radius: 3px; }
 .dungeon-group.drag-over { border: 2px dashed rgba(255, 215, 0, 0.6); background: rgba(255, 255, 255, 0.06); transform: scale(1.015); }
 
+/* === MOBILE NAV DROPDOWN (hidden on desktop) === */
+.banner-mobile-nav {
+    display: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8em;
+    padding: 6px 30px 6px 10px;
+    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%);
+    border: 1px solid #2a6aaa;
+    color: #8ac4ff;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238ac4ff' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    width: auto;
+    min-width: 120px;
+}
+.banner-mobile-nav option {
+    background: #0d2040;
+    color: #8ac4ff;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 700px) {
     .container { margin: 100px 8px 40px 8px; width: auto; }
@@ -688,24 +732,28 @@ button:active:not(:disabled) { transform: scale(0.98); }
     h3 { font-size: 1.6em; }
     #timer-banner {
         font-size: 0.85em;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         height: auto;
         padding: 8px 10px;
         gap: 6px;
+        justify-content: space-between;
+        align-items: center;
     }
-    .banner-tabs {
+    /* Hide tab buttons, show dropdown */
+    .banner-tabs { display: none !important; }
+    .banner-mobile-nav { display: block; flex-shrink: 0; }
+    .banner-auth {
         position: static;
-        justify-content: flex-start;
-        margin-bottom: 0;
-        width: 100%;
-        max-width: 100%;
-        padding-bottom: 2px;
-        -webkit-overflow-scrolling: touch;
+        margin: 0;
+        flex-shrink: 0;
     }
+    .auth-nav-btn { font-size: 0.7em !important; padding: 5px 10px !important; }
     .banner-timer {
         width: 100%;
         padding: 0;
         gap: 6px 8px;
+        order: 3;
     }
     .banner-timer .timer-label {
         white-space: normal;
@@ -715,7 +763,6 @@ button:active:not(:disabled) { transform: scale(0.98); }
         width: 100%;
         gap: 6px;
     }
-    .banner-tab { font-size: 0.7em; padding: 4px 10px; }
     #toast-container { right: 10px; left: 10px; }
     .toast { max-width: 100%; }
     #twitchTop { grid-template-columns: 1fr; }
@@ -723,8 +770,6 @@ button:active:not(:disabled) { transform: scale(0.98); }
     .video-grid { grid-template-columns: 1fr; }
     .video-subtabs { flex-wrap: wrap; }
     .community-grid { grid-template-columns: 1fr; }
-    .banner-auth { position: static; margin-top: 4px; }
-    .auth-nav-btn { font-size: 0.7em !important; padding: 4px 10px !important; }
 }
 
 

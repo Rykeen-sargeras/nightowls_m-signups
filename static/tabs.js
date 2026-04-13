@@ -7,11 +7,6 @@ const TabManager = {
     attendanceLoaded: false,
 
     switchTab(tab) {
-        if (tab === "attendance" && !this.adminVerified) {
-            UI.toast("Admin access required", "error");
-            return;
-        }
-
         this.activeTab = tab;
         const container = document.querySelector(".container");
 
@@ -29,6 +24,10 @@ const TabManager = {
 
         const tabBtn = document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1));
         if (tabBtn) tabBtn.classList.add("active");
+
+        // Sync mobile dropdown
+        const mobileNav = document.getElementById("mobileNavSelect");
+        if (mobileNav) mobileNav.value = tab;
 
         if (tab === "signups") {
             document.getElementById("signupsTabContent").style.display = "block";
@@ -56,9 +55,7 @@ const TabManager = {
 
     unlockAttendanceTab() {
         this.adminVerified = true;
-        const el = document.getElementById("tabAttendance");
-        if (el) el.style.display = "";
-        Admin.log("Attendance tab unlocked");
+        Admin.log("HighScore tab admin access granted");
     },
 
     async _loadAttendance() {

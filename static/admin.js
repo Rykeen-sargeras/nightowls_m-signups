@@ -49,7 +49,7 @@ const Admin = {
                     <button class="btn btn-sm btn-success" id="btnSave">Save Groups</button>
                 </div>
                 <button class="btn btn-sm btn-secondary" id="btnDrag" style="width:100%;margin-top:4px;">Enable Drag & Drop</button>
-                <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show Attendance Tab</button>
+                <button class="btn btn-sm btn-secondary" id="btnAttendance" style="width:100%;margin-top:4px;">Show HighScore! Tab</button>
                 <button class="btn btn-sm btn-secondary" id="btnMembers" style="width:100%;margin-top:4px;">Member List</button>
             </div>
             <div id="debug-console">Waiting for logs...</div>
@@ -142,7 +142,7 @@ const Admin = {
     },
     async showAttendance() {
         TabManager.switchTab("attendance");
-        this.log("Switched to attendance tab");
+        this.log("Switched to HighScore! tab");
     },
 };
 

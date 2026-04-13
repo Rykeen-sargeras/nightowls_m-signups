@@ -19,8 +19,16 @@
         <button class="banner-tab" id="tabVideos" onclick="TabManager.switchTab('videos')">Videos</button>
         <button class="banner-tab" id="tabCommunity" onclick="TabManager.switchTab('community')">Community</button>
         <button class="banner-tab" id="tabRules" onclick="TabManager.switchTab('rules')">Rules</button>
-        <button class="banner-tab" id="tabAttendance" onclick="TabManager.switchTab('attendance')" style="display:none;">Attendance</button>
+        <button class="banner-tab" id="tabAttendance" onclick="TabManager.switchTab('attendance')">HighScore!</button>
     </div>
+    <select class="banner-mobile-nav" id="mobileNavSelect" onchange="TabManager.switchTab(this.value)">
+        <option value="signups" selected>Signups</option>
+        <option value="streams">Streams</option>
+        <option value="videos">Videos</option>
+        <option value="community">Community</option>
+        <option value="rules">Rules</option>
+        <option value="attendance">HighScore!</option>
+    </select>
     <div class="banner-timer" id="timerText">Loading...</div>
     <div class="banner-auth">
         <button class="auth-nav-btn" id="authNavBtn">Sign Up / Login</button>
@@ -56,7 +64,7 @@
 
         <!-- ATTENDANCE TAB (admin only) -->
         <div id="attendanceTabContent" style="display:none;">
-            <h3>Attendance Tracker</h3>
+            <h3>HighScore!</h3>
             <div id="attendanceTable"></div>
         </div>
     </div>
