@@ -1,11 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, func, UniqueConstraint
 from app.database import Base
 
 
 class Player(Base):
     __tablename__ = "players"
+    __table_args__ = (
+        UniqueConstraint("username", "event_type", name="uq_player_username_event"),
+    )
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
+    username = Column(String, nullable=False, index=True)
     wow_class = Column(String, nullable=False)
     specialization = Column(String, nullable=False)
     role = Column(String, nullable=False)

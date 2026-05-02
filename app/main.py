@@ -139,6 +139,33 @@ async def lifespan(app: FastAPI):
             ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) DEFAULT 'mythicplus',
             ADD COLUMN IF NOT EXISTS signup_status VARCHAR(20) DEFAULT 'available'
         """))
+        # Drop old unique constraint on username (allow same name for different event types)
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                -- Drop unique index if it exists
+                IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'ix_players_username' AND schemaname = 'public') THEN
+                    DROP INDEX ix_players_username;
+                END IF;
+                -- Drop any unique constraint on username alone
+                IF EXISTS (
+                    SELECT 1 FROM pg_constraint
+                    WHERE conname = 'players_username_key' AND conrelid = 'players'::regclass
+                ) THEN
+                    ALTER TABLE players DROP CONSTRAINT players_username_key;
+                END IF;
+                -- Add composite unique constraint if it doesn't exist
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'uq_player_username_event'
+                ) THEN
+                    ALTER TABLE players ADD CONSTRAINT uq_player_username_event UNIQUE (username, event_type);
+                END IF;
+                -- Re-create a non-unique index on username for queries
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'ix_players_username_lookup' AND schemaname = 'public') THEN
+                    CREATE INDEX ix_players_username_lookup ON players (username);
+                END IF;
+            END $$;
+        """))
     await ensure_users_schema()
     start_scheduler()
     yield
