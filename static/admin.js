@@ -154,27 +154,10 @@ const Admin = {
             const result = await API.discordExport(pw);
             await navigator.clipboard.writeText(result.discord_text);
             UI.toast("Discord groups copied to clipboard!");
-            this.log("Discord export copied to clipboard");
+            this.log("Discord export copied");
         } catch (err) {
-            // Fallback if clipboard API fails
-            if (err.message === "Discord export failed") {
-                UI.toast(err.message, "error");
-            } else {
-                try {
-                    const result = await API.discordExport(pw);
-                    const ta = document.createElement("textarea");
-                    ta.value = result.discord_text;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(ta);
-                    UI.toast("Discord groups copied to clipboard!");
-                    this.log("Discord export copied (fallback)");
-                } catch (err2) {
-                    UI.toast(err2.message, "error");
-                    this.log("Discord export failed: " + err2.message);
-                }
-            }
+            UI.toast(err.message || "Discord export failed", "error");
+            this.log("Discord export failed: " + err.message);
         }
     },
 };

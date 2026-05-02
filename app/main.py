@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse
 from sqlalchemy import text
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -130,17 +128,26 @@ async def ensure_users_schema():
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Add new columns if they don't exist
+        await conn.execute(text("""
+            ALTER TABLE IF EXISTS players
+            ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) DEFAULT 'mythicplus',
+            ADD COLUMN IF NOT EXISTS signup_status VARCHAR(20) DEFAULT 'available'
+        """))
+        await conn.execute(text("""
+            ALTER TABLE IF EXISTS archived_players
+            ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) DEFAULT 'mythicplus',
+            ADD COLUMN IF NOT EXISTS signup_status VARCHAR(20) DEFAULT 'available'
+        """))
     await ensure_users_schema()
     start_scheduler()
     yield
     stop_scheduler()
 
 
-app = FastAPI(title="NightOwls Mythic+ API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="NightOwls Mythic+ API", version="3.0.0", lifespan=lifespan)
 
 
-# Middleware to fix redirect URLs behind HTTPS proxy (Koyeb/Railway)
-# FastAPI's trailing-slash redirects default to http:// when behind a proxy
 class ForceHTTPSRedirectMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)

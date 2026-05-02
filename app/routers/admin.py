@@ -71,6 +71,7 @@ async def archive_and_reset(req: AdminRequest, db: AsyncSession = Depends(get_db
         db.add(ArchivedPlayer(
             username=p.username, wow_class=p.wow_class,
             specialization=p.specialization, role=p.role, group_index=p.group_index,
+            event_type=p.event_type, signup_status=p.signup_status,
         ))
     await db.execute(delete(Player))
     state = await _get_or_create_state(db)

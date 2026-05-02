@@ -294,39 +294,6 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .badge-missing { background: rgba(255, 68, 68, 0.2); color: #ff6b6b; border: 1px solid rgba(255,68,68,0.3); }
 .role-header { font-size: 0.7em; text-transform: uppercase; color: #666; margin-top: 10px; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.08); font-family: 'Cinzel', serif; letter-spacing: 1px; }
 
-/* === SIGNUP ORDER BADGE === */
-.signup-num {
-    display: inline-block;
-    font-size: 0.65em;
-    font-weight: 700;
-    color: #ffd100;
-    background: rgba(255, 209, 0, 0.12);
-    border: 1px solid rgba(255, 209, 0, 0.25);
-    border-radius: 3px;
-    padding: 1px 5px;
-    margin-right: 5px;
-    font-family: 'Lato', sans-serif;
-    min-width: 24px;
-    text-align: center;
-    vertical-align: middle;
-    letter-spacing: 0;
-}
-
-/* === BENCH PRIORITY BADGE === */
-.bench-priority-badge {
-    display: inline-block;
-    color: #4CAF50;
-    font-size: 0.8em;
-    margin-right: 4px;
-    vertical-align: middle;
-    text-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
-    animation: priorityGlow 2s ease-in-out infinite;
-}
-@keyframes priorityGlow {
-    0%, 100% { text-shadow: 0 0 6px rgba(76, 175, 80, 0.5); }
-    50% { text-shadow: 0 0 12px rgba(76, 175, 80, 0.8), 0 0 4px rgba(76, 175, 80, 0.4); }
-}
-
 /* === PLAYERS === */
 .player { padding: 7px 5px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; font-family: 'Cinzel', serif; letter-spacing: 0.5px; font-size: 0.9em; transition: background 0.2s; }
 .player:hover { background: rgba(255,255,255,0.03); }
@@ -706,32 +673,6 @@ button:active:not(:disabled) { transform: scale(0.98); }
 .player.dragging { opacity: 0.4; background: rgba(255, 215, 0, 0.15); border: 1px dashed var(--wow-gold); border-radius: 3px; }
 .dungeon-group.drag-over { border: 2px dashed rgba(255, 215, 0, 0.6); background: rgba(255, 255, 255, 0.06); transform: scale(1.015); }
 
-/* === MOBILE NAV DROPDOWN (hidden on desktop) === */
-.banner-mobile-nav {
-    display: none;
-    font-family: 'Cinzel', serif;
-    font-size: 0.8em;
-    padding: 6px 30px 6px 10px;
-    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%);
-    border: 1px solid #2a6aaa;
-    color: #8ac4ff;
-    border-radius: 4px;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238ac4ff' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    width: auto;
-    min-width: 120px;
-}
-.banner-mobile-nav option {
-    background: #0d2040;
-    color: #8ac4ff;
-}
-
 /* === RESPONSIVE === */
 @media (max-width: 700px) {
     .container { margin: 100px 8px 40px 8px; width: auto; }
@@ -747,28 +688,24 @@ button:active:not(:disabled) { transform: scale(0.98); }
     h3 { font-size: 1.6em; }
     #timer-banner {
         font-size: 0.85em;
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-direction: column;
         height: auto;
         padding: 8px 10px;
         gap: 6px;
-        justify-content: space-between;
-        align-items: center;
     }
-    /* Hide tab buttons, show dropdown */
-    .banner-tabs { display: none !important; }
-    .banner-mobile-nav { display: block; flex-shrink: 0; }
-    .banner-auth {
+    .banner-tabs {
         position: static;
-        margin: 0;
-        flex-shrink: 0;
+        justify-content: flex-start;
+        margin-bottom: 0;
+        width: 100%;
+        max-width: 100%;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
     }
-    .auth-nav-btn { font-size: 0.7em !important; padding: 5px 10px !important; }
     .banner-timer {
         width: 100%;
         padding: 0;
         gap: 6px 8px;
-        order: 3;
     }
     .banner-timer .timer-label {
         white-space: normal;
@@ -778,6 +715,7 @@ button:active:not(:disabled) { transform: scale(0.98); }
         width: 100%;
         gap: 6px;
     }
+    .banner-tab { font-size: 0.7em; padding: 4px 10px; }
     #toast-container { right: 10px; left: 10px; }
     .toast { max-width: 100%; }
     #twitchTop { grid-template-columns: 1fr; }
@@ -785,6 +723,8 @@ button:active:not(:disabled) { transform: scale(0.98); }
     .video-grid { grid-template-columns: 1fr; }
     .video-subtabs { flex-wrap: wrap; }
     .community-grid { grid-template-columns: 1fr; }
+    .banner-auth { position: static; margin-top: 4px; }
+    .auth-nav-btn { font-size: 0.7em !important; padding: 4px 10px !important; }
 }
 
 
@@ -1120,4 +1060,265 @@ button:active:not(:disabled) { transform: scale(0.98); }
         width: 100%;
         justify-content: space-between;
     }
+}
+
+/* === EVENT TYPE TOGGLE === */
+.event-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 20px;
+}
+.event-toggle-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 1em;
+    padding: 10px 30px;
+    background: rgba(20, 20, 30, 0.6);
+    border: 1px solid #2a6aaa;
+    color: #8ac4ff;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+}
+.event-toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+.event-toggle-btn:last-child { border-radius: 0 6px 6px 0; }
+.event-toggle-btn.active {
+    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%);
+    color: #ffd100;
+    border-color: #ffd100;
+    text-shadow: 0 0 8px rgba(255, 209, 0, 0.4);
+}
+.event-toggle-btn:hover:not(.active) {
+    background: rgba(42, 106, 170, 0.2);
+}
+
+/* === EVENT TIMER (per section) === */
+.event-timer {
+    text-align: center;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 209, 0, 0.15);
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    color: #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* === STATUS BADGES === */
+.status-badge {
+    font-size: 0.7em;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+}
+.status-badge.tent {
+    color: #FFB74D;
+    background: rgba(255, 183, 77, 0.15);
+    border: 1px solid rgba(255, 183, 77, 0.3);
+}
+.status-badge.late {
+    color: #EF5350;
+    background: rgba(239, 83, 80, 0.15);
+    border: 1px solid rgba(239, 83, 80, 0.3);
+}
+
+/* === SIGNUP ORDER BADGE === */
+.signup-num {
+    display: inline-block;
+    font-size: 0.65em;
+    font-weight: 700;
+    color: #ffd100;
+    background: rgba(255, 209, 0, 0.12);
+    border: 1px solid rgba(255, 209, 0, 0.25);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-right: 5px;
+    font-family: 'Lato', sans-serif;
+    min-width: 24px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* === BENCH PRIORITY BADGE === */
+.bench-priority-badge {
+    display: inline-block;
+    color: #4CAF50;
+    font-size: 0.8em;
+    margin-right: 4px;
+    vertical-align: middle;
+    text-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+    animation: priorityGlow 2s ease-in-out infinite;
+}
+@keyframes priorityGlow {
+    0%, 100% { text-shadow: 0 0 6px rgba(76, 175, 80, 0.5); }
+    50% { text-shadow: 0 0 12px rgba(76, 175, 80, 0.8), 0 0 4px rgba(76, 175, 80, 0.4); }
+}
+
+/* === RAID ROSTER === */
+.raid-roster {
+    display: block;
+}
+.raid-summary {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 209, 0, 0.15);
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    color: #ffd100;
+}
+.raid-role-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+.raid-role-section h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.raid-slots {
+    font-size: 0.75em;
+    color: #888;
+    font-family: 'Lato', sans-serif;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.raid-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.raid-backup-label {
+    font-size: 0.8em;
+    color: #FFB74D;
+    font-style: italic;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    padding-left: 5px;
+}
+.backup-tank {
+    opacity: 0.7;
+    border-left: 2px solid #FFB74D;
+    padding-left: 8px;
+}
+
+/* === ARCHIVE HISTORY === */
+.archive-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.archive-section h3 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+.archive-controls {
+    text-align: center;
+    margin-bottom: 20px;
+}
+#archiveSelect {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    padding: 8px 35px 8px 12px;
+    background: linear-gradient(180deg, #1a3a6b 0%, #0d2040 100%);
+    border: 1px solid #2a6aaa;
+    color: #8ac4ff;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238ac4ff' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    min-width: 280px;
+    max-width: 100%;
+}
+#archiveSelect option {
+    background: #0d2040;
+    color: #8ac4ff;
+}
+
+.archive-event {
+    margin-top: 10px;
+}
+.archive-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.archive-group-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px;
+}
+.archive-group-card h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.archive-group-card .group-badges {
+    margin-bottom: 8px;
+}
+.archive-player {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    font-size: 0.85em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.archive-player:last-child { border-bottom: none; }
+
+.archive-bench {
+    background: rgba(30, 30, 40, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+}
+.archive-bench h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.archive-raid-role {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+.archive-raid-role h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 1em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 700px) {
+    .archive-groups-grid { grid-template-columns: 1fr; }
+    #archiveSelect { min-width: 0; width: 100%; }
 }

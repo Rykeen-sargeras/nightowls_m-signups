@@ -2,7 +2,6 @@ from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
 
-# Full WoW Class → Spec → Role mapping
 VALID_SPECS: dict[str, dict[str, str]] = {
     "Death Knight": {"Blood": "Tank", "Frost": "Melee", "Unholy": "Melee"},
     "Demon Hunter": {"Havoc": "Melee", "Vengeance": "Tank"},
@@ -26,10 +25,8 @@ BREZ_CLASSES = {"Druid", "Paladin", "Warlock", "Death Knight"}
 def get_specs_for_class(wow_class: str) -> dict[str, str]:
     return VALID_SPECS.get(wow_class, {})
 
-
 def has_lust(wow_class: str) -> bool:
     return wow_class in LUST_CLASSES
-
 
 def has_brez(wow_class: str) -> bool:
     return wow_class in BREZ_CLASSES
@@ -39,6 +36,8 @@ class SignupRequest(BaseModel):
     username: str
     wow_class: str
     specialization: str
+    event_type: str = "mythicplus"
+    signup_status: str = "available"
 
     @field_validator("username")
     @classmethod
@@ -55,6 +54,20 @@ class SignupRequest(BaseModel):
             raise ValueError(f"Invalid class: {v}")
         return v
 
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        if v not in ("mythicplus", "raid"):
+            raise ValueError("event_type must be 'mythicplus' or 'raid'")
+        return v
+
+    @field_validator("signup_status")
+    @classmethod
+    def validate_signup_status(cls, v: str) -> str:
+        if v not in ("available", "tentative", "late"):
+            raise ValueError("signup_status must be 'available', 'tentative', or 'late'")
+        return v
+
 
 class SignupResponse(BaseModel):
     success: bool
@@ -69,8 +82,10 @@ class PlayerOut(BaseModel):
     specialization: str
     role: str
     group_index: str
+    event_type: str
+    signup_status: str
     signed_up_at: datetime
-    signup_number: int = 0  # assigned by the roster endpoint based on signup order
+    signup_number: int = 0
 
     class Config:
         from_attributes = True
@@ -87,7 +102,7 @@ class AdminRequest(BaseModel):
 
 class SaveGroupsRequest(BaseModel):
     password: str
-    groups: dict[str, str]  # { "PlayerName": "0", "OtherPlayer": "Bench" }
+    groups: dict[str, str]
 
 
 class ClassSpecResponse(BaseModel):

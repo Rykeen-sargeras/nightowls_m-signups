@@ -10,6 +10,8 @@ class Player(Base):
     specialization = Column(String, nullable=False)
     role = Column(String, nullable=False)
     group_index = Column(String, default="")
+    event_type = Column(String, default="mythicplus")  # "mythicplus" or "raid"
+    signup_status = Column(String, default="available")  # "available", "tentative", "late"
     signed_up_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -28,6 +30,8 @@ class ArchivedPlayer(Base):
     specialization = Column(String, nullable=False)
     role = Column(String, nullable=False)
     group_index = Column(String, default="")
+    event_type = Column(String, default="mythicplus")
+    signup_status = Column(String, default="available")
     event_date = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -42,7 +46,7 @@ class Video(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-# ========== NEW: User Auth System ==========
+# ========== User Auth System ==========
 
 class User(Base):
     __tablename__ = "users"
@@ -54,7 +58,7 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-# ========== NEW: Community Profiles ==========
+# ========== Community Profiles ==========
 
 class MemberProfile(Base):
     __tablename__ = "member_profiles"
@@ -64,17 +68,17 @@ class MemberProfile(Base):
     main_class = Column(String(50), default="")
     guild_rank = Column(String(50), default="")
     bio = Column(Text, default="")
-    profile_image = Column(Text, default="")  # base64 encoded
-    seed = Column(Integer, default=100)  # lower = first in directory
+    profile_image = Column(Text, default="")
+    seed = Column(Integer, default=100)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
-# ========== NEW: Rules / Site Content ==========
+# ========== Rules / Site Content ==========
 
 class SiteContent(Base):
     __tablename__ = "site_content"
     id = Column(Integer, primary_key=True, index=True)
-    content_key = Column(String(50), unique=True, nullable=False, index=True)  # e.g. "rules", "community_banner", "rules_banner"
+    content_key = Column(String(50), unique=True, nullable=False, index=True)
     content_value = Column(Text, default="")
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

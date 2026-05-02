@@ -1,12 +1,10 @@
-// ============================================
-// APP — Main application controller
-// ============================================
 const App = {
-    players: [],
+    mpPlayers: [],
+    raidPlayers: [],
     isLocked: false,
     pollTimer: null,
-    attendanceMap: {},
     benchPriorityNames: new Set(),
+    currentEventType: "mythicplus",
 
     async init() {
         UI.initParticles();
@@ -22,51 +20,60 @@ const App = {
             return;
         }
 
-        UI.renderSignupForm();
+        UI.renderSignupForm("mythicplus");
+        UI.renderSignupForm("raid");
         Admin.init();
         TwitchManager.init();
 
-        // Load bench priority data
+        // Load bench priority
         try {
             const bpData = await API.fetchBenchPriority();
             this.benchPriorityNames = new Set(bpData.bench_priority || []);
-            if (this.benchPriorityNames.size > 0) {
-                Admin.log(`Bench priority: ${[...this.benchPriorityNames].join(", ")}`);
-            }
-        } catch (err) {
-            Admin.log("Bench priority load skipped: " + err.message);
-        }
+        } catch (err) { Admin.log("Bench priority load skipped"); }
 
         await AuthManager.init();
         await this.refreshRoster();
         this.pollTimer = setInterval(() => this.refreshRoster(), CONFIG.POLL_INTERVAL);
     },
 
+    switchEventType(type) {
+        this.currentEventType = type;
+        document.getElementById("toggleMythicPlus").classList.toggle("active", type === "mythicplus");
+        document.getElementById("toggleRaid").classList.toggle("active", type === "raid");
+        document.getElementById("mythicplusSection").style.display = type === "mythicplus" ? "block" : "none";
+        document.getElementById("raidSection").style.display = type === "raid" ? "block" : "none";
+    },
+
     async refreshRoster() {
         try {
-            const data = await API.fetchRoster();
-            this.players = data.players;
-            this.isLocked = data.is_locked;
+            // Fetch M+ roster
+            const mpData = await API.fetchRoster("mythicplus");
+            this.mpPlayers = mpData.players;
+            this.isLocked = mpData.is_locked;
 
-            // Assign signup numbers client-side (players already sorted by signed_up_at)
-            this.players.forEach((p, i) => {
+            this.mpPlayers.forEach((p, i) => {
                 p.signup_number = i + 1;
                 p.bench_priority = this.benchPriorityNames.has(p.username);
             });
 
             if (this.isLocked) {
                 UI.showLocked();
-                const hasSaved = this.players.some(p => p.group_index && p.group_index !== "");
+                const hasSaved = this.mpPlayers.some(p => p.group_index && p.group_index !== "");
                 if (hasSaved) {
-                    UI.renderSavedGroups(this.players);
-                    Admin.log("Loaded saved groups");
+                    UI.renderSavedGroups(this.mpPlayers);
                 } else {
-                    UI.renderRoster(this.players);
+                    UI.renderRoster(this.mpPlayers);
                 }
             } else {
                 UI.showUnlocked();
-                UI.renderRoster(this.players);
+                UI.renderRoster(this.mpPlayers);
             }
+
+            // Fetch Raid roster
+            const raidData = await API.fetchRoster("raid");
+            this.raidPlayers = raidData.players;
+            this.raidPlayers.forEach((p, i) => { p.signup_number = i + 1; });
+            UI.renderRaidRoster(this.raidPlayers);
 
             if (DragDrop.enabled) DragDrop.enable();
         } catch (err) {
@@ -74,30 +81,41 @@ const App = {
         }
     },
 
-    async handleSignup() {
-        const username = document.getElementById("username").value.trim();
-        const cls = document.getElementById("classSelect").value;
-        const spec = document.getElementById("specSelect").value;
-        const btn = document.getElementById("signupBtn");
+    async handleSignup(eventType = "mythicplus") {
+        const isRaid = eventType === "raid";
+        const usernameId = isRaid ? "raidUsername" : "username";
+        const classId = isRaid ? "raidClassSelect" : "classSelect";
+        const specId = isRaid ? "raidSpecSelect" : "specSelect";
+        const statusId = isRaid ? "raidStatusSelect" : "statusSelect";
+        const btnId = isRaid ? "raidSignupBtn" : "signupBtn";
+        const roleId = isRaid ? "raidDerivedRole" : "derivedRole";
+
+        const username = document.getElementById(usernameId).value.trim();
+        const cls = document.getElementById(classId).value;
+        const spec = document.getElementById(specId).value;
+        const status = document.getElementById(statusId).value;
+        const btn = document.getElementById(btnId);
 
         if (!username) return UI.toast("Enter a character name", "error");
         if (!cls) return UI.toast("Select a class", "error");
         if (!spec) return UI.toast("Select a specialization", "error");
 
-        if (this.players.some(p => p.username.toLowerCase() === username.toLowerCase())) {
+        const checkPlayers = isRaid ? this.raidPlayers : this.mpPlayers;
+        if (checkPlayers.some(p => p.username.toLowerCase() === username.toLowerCase())) {
             return UI.toast("That name is already signed up", "error");
         }
 
         btn.disabled = true; btn.textContent = "Signing up...";
         try {
-            const result = await API.signup(username, cls, spec);
+            const result = await API.signup(username, cls, spec, eventType, status);
             UI.toast(result.message);
-            document.getElementById("username").value = "";
-            document.getElementById("classSelect").value = "";
-            document.getElementById("specSelect").innerHTML = '<option value="">Select Spec</option>';
-            document.getElementById("specSelect").disabled = true;
-            document.getElementById("derivedRole").textContent = "Select a class and spec to see your role";
-            document.getElementById("derivedRole").className = "derived-role";
+            document.getElementById(usernameId).value = "";
+            document.getElementById(classId).value = "";
+            document.getElementById(specId).innerHTML = '<option value="">Select Spec</option>';
+            document.getElementById(specId).disabled = true;
+            document.getElementById(roleId).textContent = "Select a class and spec to see your role";
+            document.getElementById(roleId).className = "derived-role";
+            document.getElementById(statusId).value = "available";
             await this.refreshRoster();
         } catch (err) {
             UI.toast(err.message, "error");
@@ -106,19 +124,17 @@ const App = {
         }
     },
 
-    async removePlayer(username) {
+    async removePlayer(username, eventType = "mythicplus") {
         if (!TabManager.adminVerified) {
-            UI.toast("Admin access required — enter password in admin panel first", "error");
+            UI.toast("Admin access required", "error");
             return;
         }
         if (!confirm(`Remove ${username} from signups?`)) return;
         try {
-            const result = await API.cancelSignup(username);
+            const result = await API.cancelSignup(username, eventType);
             UI.toast(result.message);
             await this.refreshRoster();
-        } catch (err) {
-            UI.toast(err.message, "error");
-        }
+        } catch (err) { UI.toast(err.message, "error"); }
     },
 };
 

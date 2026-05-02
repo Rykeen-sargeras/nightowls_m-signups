@@ -118,25 +118,37 @@ const API = {
         if (!res.ok) throw new Error("Failed to load spec data");
         return (await res.json()).classes;
     },
-    async fetchRoster() {
-        const res = await fetch(`${CONFIG.API_URL}/api/roster`);
+    async fetchRoster(eventType = null) {
+        let url = `${CONFIG.API_URL}/api/roster`;
+        if (eventType) url += `?event_type=${eventType}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to load roster");
         return await res.json();
     },
-    async signup(username, wowClass, specialization) {
+    async signup(username, wowClass, specialization, eventType = "mythicplus", signupStatus = "available") {
         const res = await fetch(`${CONFIG.API_URL}/api/signup`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, wow_class: wowClass, specialization }),
+            body: JSON.stringify({ username, wow_class: wowClass, specialization, event_type: eventType, signup_status: signupStatus }),
         });
         return await this._parseResponse(res, "Signup failed");
     },
-    async cancelSignup(username) {
-        const res = await fetch(`${CONFIG.API_URL}/api/signup/${encodeURIComponent(username)}`, { method: "DELETE" });
+    async cancelSignup(username, eventType = "mythicplus") {
+        const res = await fetch(`${CONFIG.API_URL}/api/signup/${encodeURIComponent(username)}?event_type=${eventType}`, { method: "DELETE" });
         return await this._parseResponse(res, "Cancel failed");
     },
     async fetchAttendance() {
         const res = await fetch(`${CONFIG.API_URL}/api/attendance/`);
         if (!res.ok) throw new Error("Failed to load attendance");
+        return await res.json();
+    },
+    async fetchArchiveHistory() {
+        const res = await fetch(`${CONFIG.API_URL}/api/attendance/history`);
+        if (!res.ok) throw new Error("Failed to load archive history");
+        return await res.json();
+    },
+    async fetchArchiveEvent(eventDate, eventType) {
+        const res = await fetch(`${CONFIG.API_URL}/api/attendance/history/${encodeURIComponent(eventDate)}?event_type=${eventType}`);
+        if (!res.ok) throw new Error("Failed to load archived event");
         return await res.json();
     },
     async deleteAttendance(password, username) {
