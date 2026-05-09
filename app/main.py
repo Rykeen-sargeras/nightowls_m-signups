@@ -139,6 +139,11 @@ async def lifespan(app: FastAPI):
             ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) DEFAULT 'mythicplus',
             ADD COLUMN IF NOT EXISTS signup_status VARCHAR(20) DEFAULT 'available'
         """))
+        # Fix any NULL values in existing data
+        await conn.execute(text("UPDATE players SET signup_status = 'available' WHERE signup_status IS NULL"))
+        await conn.execute(text("UPDATE players SET event_type = 'mythicplus' WHERE event_type IS NULL"))
+        await conn.execute(text("UPDATE archived_players SET signup_status = 'available' WHERE signup_status IS NULL"))
+        await conn.execute(text("UPDATE archived_players SET event_type = 'mythicplus' WHERE event_type IS NULL"))
         # Drop old unique constraint on username (allow same name for different event types)
         await conn.execute(text("""
             DO $$
