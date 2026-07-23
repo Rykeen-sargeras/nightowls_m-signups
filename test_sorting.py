@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NightOwls Mythic+ Signups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div id="bg-layer"></div>
+<div id="particles"></div>
+<div id="timer-banner">
+    <div class="banner-tabs">
+        <button class="banner-tab active" id="tabSignups" onclick="TabManager.switchTab('signups')">Signups</button>
+        <button class="banner-tab" id="tabStreams" onclick="TabManager.switchTab('streams')">Streams</button>
+        <button class="banner-tab" id="tabVideos" onclick="TabManager.switchTab('videos')">Videos</button>
+        <button class="banner-tab" id="tabCommunity" onclick="TabManager.switchTab('community')">Community</button>
+        <button class="banner-tab" id="tabRules" onclick="TabManager.switchTab('rules')">Rules</button>
+        <button class="banner-tab" id="tabAttendance" onclick="TabManager.switchTab('attendance')">HighScore!</button>
+    </div>
+    <div class="banner-timer" id="timerText">Loading...</div>
+    <div class="banner-auth">
+        <button class="auth-nav-btn" id="authNavBtn">Sign Up / Login</button>
+    </div>
+</div>
+<button id="adminToggle" aria-label="Toggle Admin Panel"></button>
+<div id="adminSection">
+    <div class="admin-inner" id="adminInner"></div>
+</div>
+<div class="container">
+    <div class="border-frame"></div>
+    <div class="content-wrapper">
+        <div class="logo-container"><img src="/static/banner.png" alt="NightOwls Mythic+ Signups"></div>
+        <div id="toast-container"></div>
+        <div id="statusMsg"></div>
+
+        <!-- SIGNUPS TAB -->
+        <div id="signupsTabContent">
+            <div class="event-toggle">
+                <button class="event-toggle-btn active" id="toggleMythicPlus" onclick="App.switchEventType('mythicplus')">Mythic+</button>
+                <button class="event-toggle-btn" id="toggleRaid" onclick="App.switchEventType('raid')">Raid</button>
+            </div>
+
+            <!-- M+ Section -->
+            <div id="mythicplusSection">
+                <div class="event-timer" id="mpTimerText">Loading...</div>
+                <div id="signupSection"></div>
+                <div id="lockedMessage"></div>
+                <div id="displayArea">
+                    <div id="rosterView" class="roster-grid"></div>
+                    <div id="groupView"></div>
+                </div>
+            </div>
+
+            <!-- Raid Section -->
+            <div id="raidSection" style="display:none;">
+                <div class="event-timer" id="raidTimerText">Loading...</div>
+                <div id="raidSignupSection"></div>
+                <div id="raidDisplayArea">
+                    <div id="raidRosterView" class="raid-roster"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STREAMS TAB -->
+        <div id="streamsTabContent" style="display:none;">
+            <h3>NightOwls Streams</h3>
+            <div id="twitchTop" class="twitch-row"></div>
+            <div id="twitchBottom" class="twitch-row"></div>
+        </div>
+
+        <!-- ATTENDANCE TAB (HighScore!) -->
+        <div id="attendanceTabContent" style="display:none;">
+            <h3>HighScore!</h3>
+            <div id="attendanceTable"></div>
+
+            <div class="archive-section">
+                <h3>Past Events</h3>
+                <div class="archive-controls">
+                    <select id="archiveSelect" onchange="TabManager.loadArchiveEvent()">
+                        <option value="">Select a past event...</option>
+                    </select>
+                </div>
+                <div id="archiveDisplay"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VIDEOS TAB — outside container -->
+<div id="videosTabContent" class="videos-fullpage" style="display:none;">
+    <div class="academy-banner"><img src="/static/academy-banner.png" alt="NightOwls Academy"></div>
+    <div class="video-subtabs">
+        <button class="video-subtab active" id="subtabRaid" onclick="VideoManager.switchCategory('raid')">Raid</button>
+        <button class="video-subtab" id="subtabMythicplus" onclick="VideoManager.switchCategory('mythicplus')">Mythic+</button>
+    </div>
+    <div id="videoAdminBar" style="display:none;">
+        <button class="btn btn-sm btn-success" id="btnAddVideo" onclick="VideoManager.showAddForm()">+ Add Video</button>
+    </div>
+    <div id="videoAddForm" style="display:none;"></div>
+    <div id="videoGrid" class="video-grid"></div>
+    <div id="videoExpanded" style="display:none;"></div>
+</div>
+
+<!-- COMMUNITY TAB — outside container -->
+<div id="communityTabContent" class="videos-fullpage" style="display:none;">
+    <div id="communityBannerArea"></div>
+    <h3>Get to Know the Community</h3>
+    <div id="communityAdminBar" style="text-align:center;margin-bottom:15px;"></div>
+    <div id="communityProfileForm" style="display:none;"></div>
+    <div id="communityGrid" class="community-grid"></div>
+</div>
+
+<!-- RULES TAB — outside container -->
+<div id="rulesTabContent" class="videos-fullpage" style="display:none;">
+    <div id="rulesBannerArea"></div>
+    <h3>Community Rules</h3>
+    <div id="rulesContent"></div>
+</div>
+
+<script src="https://player.twitch.tv/js/embed/v1.js"></script>
+<script src="/static/config.js"></script>
+<script src="/static/data.js"></script>
+<script src="/static/api.js"></script>
+<script src="/static/ui.js"></script>
+<script src="/static/sorting.js"></script>
+<script src="/static/admin.js"></script>
+<script src="/static/twitch.js"></script>
+<script src="/static/tabs.js"></script>
+<script src="/static/videos.js"></script>
+<script src="/static/auth.js"></script>
+<script src="/static/community.js"></script>
+<script src="/static/rules.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

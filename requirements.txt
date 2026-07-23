@@ -1,10 +1,44 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.0
-sqlalchemy[asyncio]==2.0.35
-asyncpg==0.29.0
-pydantic==2.9.0
-apscheduler==3.10.4
-pytz==2024.1
-bcrypt==4.2.0
-PyJWT==2.9.0
-python-multipart==0.0.9
+import unittest
+
+from app.services.utility import player_capabilities, score_group
+
+
+class UtilityConfirmationTests(unittest.TestCase):
+    def test_hunter_lust_requires_confirmation(self):
+        base = {
+            "username": "Hunter",
+            "wow_class": "Hunter",
+            "specialization": "Marksmanship",
+            "role": "Ranged",
+        }
+        self.assertFalse(player_capabilities(base)["bloodlust"])
+        self.assertTrue(player_capabilities({**base, "can_provide_lust": True})["bloodlust"])
+
+    def test_warlock_interrupt_requires_confirmation(self):
+        base = {
+            "username": "Lock",
+            "wow_class": "Warlock",
+            "specialization": "Destruction",
+            "role": "Ranged",
+        }
+        self.assertFalse(player_capabilities(base)["reliable_interrupt"])
+        self.assertTrue(player_capabilities({**base, "can_interrupt": True})["reliable_interrupt"])
+
+    def test_group_metrics_count_confirmed_player_specific_utility(self):
+        group = [
+            {"username": "Tank", "wow_class": "Warrior", "specialization": "Protection", "role": "Tank"},
+            {"username": "Heal", "wow_class": "Priest", "specialization": "Holy", "role": "Healer"},
+            {"username": "Melee1", "wow_class": "Rogue", "specialization": "Outlaw", "role": "Melee"},
+            {"username": "Melee2", "wow_class": "Monk", "specialization": "Windwalker", "role": "Melee"},
+            {"username": "Hunter", "wow_class": "Hunter", "specialization": "Marksmanship", "role": "Ranged", "can_provide_lust": False},
+        ]
+        _, no_lust = score_group(group)
+        _, with_lust = score_group([{**p, "can_provide_lust": True} if p["username"] == "Hunter" else p for p in group])
+
+        self.assertFalse(no_lust["has_lust"])
+        self.assertTrue(with_lust["has_lust"])
+        self.assertGreater(with_lust["score"], no_lust["score"])
+
+
+if __name__ == "__main__":
+    unittest.main()

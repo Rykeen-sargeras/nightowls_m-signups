@@ -1,0 +1,95 @@
+import os
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, func
+from app.database import get_db
+from app.models.models import Player, EventState, ArchivedPlayer
+from app.models.schemas import AdminRequest
+
+router = APIRouter()
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "nightowls2024")
+
+# Trusted admin IPs — these get auto-logged in without a password
+TRUSTED_IPS = os.getenv("TRUSTED_IPS", "47.204.191.93").split(",")
+
+
+def _verify_password(password: str):
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin password")
+
+
+@router.get("/check-ip")
+async def check_ip(request: Request):
+    """Check if the visitor's IP is a trusted admin IP. Returns password for auto-login."""
+    client_ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    if not client_ip:
+        client_ip = request.client.host if request.client else ""
+    is_admin = client_ip in TRUSTED_IPS
+    # If trusted IP, return the password so the frontend can use it for API calls
+    return {
+        "ip": client_ip,
+        "is_admin": is_admin,
+        "token": ADMIN_PASSWORD if is_admin else None,
+    }
+
+
+@router.post("/verify")
+async def verify_admin(req: AdminRequest):
+    _verify_password(req.password)
+    return {"success": True}
+
+
+@router.post("/lock")
+async def lock_signups(req: AdminRequest, db: AsyncSession = Depends(get_db)):
+    _verify_password(req.password)
+    state = await _get_or_create_state(db)
+    state.is_locked = True
+    state.locked_at = func.now()
+    await db.commit()
+    return {"success": True, "message": "Signups locked"}
+
+
+@router.post("/unlock")
+async def unlock_signups(req: AdminRequest, db: AsyncSession = Depends(get_db)):
+    _verify_password(req.password)
+    state = await _get_or_create_state(db)
+    state.is_locked = False
+    state.locked_at = None
+    result = await db.execute(select(Player))
+    for player in result.scalars().all():
+        player.group_index = ""
+    await db.commit()
+    return {"success": True, "message": "Signups unlocked, groups cleared"}
+
+
+@router.post("/archive")
+async def archive_and_reset(req: AdminRequest, db: AsyncSession = Depends(get_db)):
+    _verify_password(req.password)
+    result = await db.execute(select(Player))
+    players = result.scalars().all()
+    archive_batch = uuid.uuid4().hex
+    for p in players:
+        db.add(ArchivedPlayer(
+            username=p.username, wow_class=p.wow_class,
+            specialization=p.specialization, role=p.role, group_index=p.group_index or "Bench",
+            event_type=p.event_type, signup_status=p.signup_status,
+            can_provide_lust=p.can_provide_lust, can_interrupt=p.can_interrupt,
+            utility_overrides=p.utility_overrides or "{}", archive_batch=archive_batch,
+        ))
+    await db.execute(delete(Player))
+    state = await _get_or_create_state(db)
+    state.is_locked = False
+    state.locked_at = None
+    await db.commit()
+    return {"success": True, "message": f"Archived {len(players)} players, roster reset"}
+
+
+async def _get_or_create_state(db: AsyncSession) -> EventState:
+    result = await db.execute(select(EventState).where(EventState.id == 1))
+    state = result.scalar_one_or_none()
+    if not state:
+        state = EventState(id=1, is_locked=False)
+        db.add(state)
+        await db.flush()
+    return state

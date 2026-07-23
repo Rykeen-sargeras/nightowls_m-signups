@@ -1,1 +1,304 @@
-python-3.11
+import unittest
+
+from app.services.sorting import auto_sort, validate_hard_constraints
+
+
+CLASS_SPEC_ROLE = {
+    "Warrior": ("Protection", "Tank"),
+    "Paladin": ("Protection", "Tank"),
+    "Death Knight": ("Blood", "Tank"),
+    "Priest": ("Holy", "Healer"),
+    "Shaman": ("Restoration", "Healer"),
+    "Druid": ("Restoration", "Healer"),
+    "Rogue": ("Outlaw", "Melee"),
+    "Monk": ("Windwalker", "Melee"),
+    "Demon Hunter": ("Havoc", "Melee"),
+    "Mage": ("Frost", "Ranged"),
+    "Hunter": ("Beast Mastery", "Ranged"),
+    "Warlock": ("Destruction", "Ranged"),
+    "Evoker": ("Devastation", "Ranged"),
+}
+
+
+def player(
+    name,
+    wow_class,
+    index,
+    status="available",
+    role=None,
+    specialization=None,
+    **extra,
+):
+    default_spec, default_role = CLASS_SPEC_ROLE[wow_class]
+    result = {
+        "id": index + 1,
+        "username": name,
+        "wow_class": wow_class,
+        "specialization": specialization or default_spec,
+        "role": role or default_role,
+        "signup_status": status,
+        "signed_up_at": f"2026-07-22T20:{index:02d}:00+00:00",
+    }
+    result.update(extra)
+    return result
+
+
+def grouped_names(result):
+    return {p["username"] for group in result["groups"] for p in group}
+
+
+class HardConstraintTests(unittest.TestCase):
+    def test_builds_only_complete_five_player_groups(self):
+        players = [
+            player("Tank1", "Warrior", 0),
+            player("Tank2", "Paladin", 1),
+            player("Heal1", "Priest", 2),
+            player("Heal2", "Shaman", 3),
+            player("Melee1", "Rogue", 4),
+            player("Melee2", "Monk", 5),
+            player("Melee3", "Demon Hunter", 6),
+            player("Range1", "Mage", 7),
+            player("Range2", "Hunter", 8),
+            player("Range3", "Warlock", 9),
+        ]
+
+        result = auto_sort(players)
+
+        self.assertEqual(len(result["groups"]), 2)
+        self.assertEqual(result["bench"], [])
+        self.assertTrue(result["hard_constraints_validated"])
+        for group in result["groups"]:
+            self.assertEqual(len(group), 5)
+            self.assertEqual(sum(p["role"] == "Tank" for p in group), 1)
+            self.assertEqual(sum(p["role"] == "Healer" for p in group), 1)
+            self.assertEqual(sum(p["role"] in {"Melee", "Ranged"} for p in group), 3)
+
+    def test_no_player_appears_twice_even_with_duplicate_input(self):
+        players = [
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("Melee", "Rogue", 2),
+            player("Range1", "Mage", 3),
+            player("Range2", "Hunter", 4),
+            player("Melee", "Monk", 5),
+        ]
+
+        result = auto_sort(players)
+        names = [p["username"].casefold() for group in result["groups"] for p in group]
+
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(sum(p.get("bench_reason") == "duplicate_player" for p in result["bench"]), 1)
+
+    def test_blocked_pair_is_never_grouped_together(self):
+        players = [
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("BlockedDps", "Rogue", 2),
+            player("Melee2", "Monk", 3),
+            player("Range1", "Mage", 4),
+            player("Range2", "Hunter", 5),
+        ]
+
+        result = auto_sort(players, blocked_pairs=[["Tank", "BlockedDps"]])
+
+        self.assertEqual(len(result["groups"]), 1)
+        self.assertNotIn("BlockedDps", grouped_names(result))
+        self.assertTrue(result["hard_constraints_validated"])
+
+    def test_blocked_pair_can_be_separated_across_two_groups(self):
+        players = [
+            player("Tank1", "Warrior", 0),
+            player("Tank2", "Paladin", 1),
+            player("Heal1", "Priest", 2),
+            player("Heal2", "Shaman", 3),
+            player("M1", "Rogue", 4),
+            player("M2", "Monk", 5),
+            player("M3", "Demon Hunter", 6),
+            player("R1", "Mage", 7),
+            player("R2", "Hunter", 8),
+            player("R3", "Warlock", 9),
+        ]
+
+        result = auto_sort(players, blocked_pairs=[["Tank1", "Heal1"]])
+
+        self.assertEqual(len(result["groups"]), 2)
+        for group in result["groups"]:
+            names = {p["username"] for p in group}
+            self.assertFalse({"Tank1", "Heal1"}.issubset(names))
+
+    def test_role_is_derived_from_selected_specialization(self):
+        players = [
+            player("Tank", "Warrior", 0, role="Ranged", specialization="Protection"),
+            player("Heal", "Priest", 1, role="Melee", specialization="Holy"),
+            player("Melee", "Rogue", 2, role="Tank", specialization="Outlaw"),
+            player("Range1", "Mage", 3, role="Healer", specialization="Frost"),
+            player("Range2", "Hunter", 4, role="Melee", specialization="Marksmanship"),
+        ]
+
+        result = auto_sort(players)
+        roles = {p["username"]: p["role"] for p in result["groups"][0]}
+
+        self.assertEqual(roles, {
+            "Tank": "Tank",
+            "Heal": "Healer",
+            "Melee": "Melee",
+            "Range1": "Ranged",
+            "Range2": "Ranged",
+        })
+        self.assertTrue(result["hard_constraints_validated"])
+
+    def test_validator_rejects_blocked_pair_in_manual_group(self):
+        group = [[
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("Dps1", "Rogue", 2),
+            player("Dps2", "Mage", 3),
+            player("Dps3", "Hunter", 4),
+        ]]
+        self.assertFalse(validate_hard_constraints(group, [["Tank", "Dps1"]]))
+
+    def test_validator_rejects_invalid_manual_group(self):
+        invalid = [[
+            player("Tank1", "Warrior", 0),
+            player("Tank2", "Paladin", 1),
+            player("Heal", "Priest", 2),
+            player("Dps1", "Rogue", 3),
+            player("Dps2", "Mage", 4),
+        ]]
+        self.assertFalse(validate_hard_constraints(invalid))
+
+
+class StrongRequirementTests(unittest.TestCase):
+    def test_prefers_two_melee_one_ranged(self):
+        players = [
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("M1", "Rogue", 2),
+            player("M2", "Rogue", 3),
+            player("M3", "Rogue", 4),
+            player("R1", "Warlock", 5),
+            player("R2", "Warlock", 6),
+        ]
+
+        result = auto_sort(players)
+        group = result["groups"][0]
+
+        self.assertEqual(sum(p["role"] == "Melee" for p in group), 2)
+        self.assertEqual(sum(p["role"] == "Ranged" for p in group), 1)
+
+    def test_uses_one_melee_two_ranged_as_secondary_setup(self):
+        players = [
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("M1", "Rogue", 2),
+            player("R1", "Warlock", 3),
+            player("R2", "Warlock", 4),
+            player("R3", "Warlock", 5),
+            player("R4", "Warlock", 6),
+        ]
+
+        result = auto_sort(players)
+        group = result["groups"][0]
+
+        self.assertEqual(sum(p["role"] == "Melee" for p in group), 1)
+        self.assertEqual(sum(p["role"] == "Ranged" for p in group), 2)
+
+    def test_spreads_lust_brez_and_melee_ranged_when_possible(self):
+        players = [
+            player("TankBrez", "Paladin", 0),
+            player("TankPlain", "Warrior", 1),
+            player("HealLust", "Shaman", 2),
+            player("HealPlain", "Priest", 3),
+            player("MeleeA", "Rogue", 4),
+            player("MeleeB", "Monk", 5),
+            player("MeleeBrez", "Death Knight", 6, role="Melee", specialization="Unholy"),
+            player("RangeLust", "Mage", 7),
+            player("RangeBrez", "Warlock", 8),
+            player("RangePlain", "Warlock", 9),
+        ]
+
+        result = auto_sort(players)
+
+        self.assertEqual(len(result["groups"]), 2)
+        for metrics in result["group_metrics"]:
+            self.assertTrue(metrics["has_lust"])
+            self.assertTrue(metrics["has_brez"])
+            self.assertGreaterEqual(metrics["melee_dps"], 1)
+            self.assertGreaterEqual(metrics["ranged_dps"], 1)
+
+    def test_previous_bench_priority_is_placed_before_nonpriority(self):
+        players = [
+            player("Tank", "Paladin", 0),
+            player("Heal", "Shaman", 1),
+            player("EarlyMelee", "Rogue", 2),
+            player("Range1", "Mage", 3),
+            player("Range2", "Hunter", 4),
+            player("PriorityWarlock", "Warlock", 5, can_interrupt=False),
+        ]
+
+        result = auto_sort(players, {"PriorityWarlock"})
+
+        self.assertIn("PriorityWarlock", grouped_names(result))
+        self.assertEqual(result["priority_grouped"], ["PriorityWarlock"])
+        self.assertEqual(len(result["bench"]), 1)
+        self.assertFalse(result["bench"][0].get("bench_priority"))
+
+    def test_priority_dps_can_change_the_selected_tank_shell(self):
+        players = [
+            player("TankWithUtility", "Paladin", 0),
+            player("AlternateTank", "Warrior", 1),
+            player("Heal", "Shaman", 2),
+            player("PriorityDps", "Warlock", 3),
+            player("Melee", "Rogue", 4),
+            player("Range1", "Mage", 5),
+            player("Range2", "Hunter", 6),
+        ]
+
+        result = auto_sort(
+            players,
+            {"PriorityDps"},
+            blocked_pairs=[["TankWithUtility", "PriorityDps"]],
+        )
+
+        self.assertIn("PriorityDps", grouped_names(result))
+        self.assertIn("AlternateTank", grouped_names(result))
+        self.assertNotIn("TankWithUtility", grouped_names(result))
+
+    def test_priority_deferred_only_when_role_capacity_prevents_it(self):
+        players = [
+            player("PriorityTank1", "Warrior", 0),
+            player("PriorityTank2", "Paladin", 1),
+            player("Heal", "Priest", 2),
+            player("Melee", "Rogue", 3),
+            player("Range1", "Mage", 4),
+            player("Range2", "Hunter", 5),
+        ]
+
+        result = auto_sort(players, {"PriorityTank1", "PriorityTank2"})
+
+        self.assertEqual(len(result["groups"]), 1)
+        self.assertEqual(len(result["priority_grouped"]), 1)
+        self.assertEqual(len(result["priority_deferred"]), 1)
+
+    def test_tentative_and_late_players_do_not_consume_priority_slots(self):
+        players = [
+            player("Tank", "Warrior", 0),
+            player("Heal", "Priest", 1),
+            player("Melee", "Rogue", 2),
+            player("Range1", "Mage", 3),
+            player("Range2", "Hunter", 4),
+            player("TentativePriority", "Warlock", 5, status="tentative"),
+            player("LatePriority", "Monk", 6, status="late"),
+        ]
+
+        result = auto_sort(players, {"TentativePriority", "LatePriority"})
+        bench_names = {p["username"] for p in result["bench"]}
+
+        self.assertEqual(len(result["groups"]), 1)
+        self.assertIn("TentativePriority", bench_names)
+        self.assertIn("LatePriority", bench_names)
+        self.assertEqual(result["priority_deferred"], [])
+
+
+if __name__ == "__main__":
+    unittest.main()

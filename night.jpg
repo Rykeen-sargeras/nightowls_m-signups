@@ -1,0 +1,30 @@
+const CLASS_COLORS = {
+    'Warrior': '#C79C6E', 'Paladin': '#F58CBA', 'Hunter': '#ABD473',
+    'Rogue': '#FFF569', 'Priest': '#FFFFFF', 'Death Knight': '#C41F3B',
+    'Shaman': '#0070DE', 'Mage': '#40C7EB', 'Warlock': '#8787ED',
+    'Monk': '#00FF96', 'Druid': '#FF7D0A', 'Demon Hunter': '#A330C9',
+    'Evoker': '#33937F',
+};
+const LUST_CLASSES = new Set(['Shaman', 'Mage', 'Evoker']);
+const BREZ_CLASSES = new Set(['Druid', 'Paladin', 'Warlock', 'Death Knight']);
+const ROLE_COLORS = { 'Tank': '#C79C6E', 'Healer': '#F58CBA', 'Melee': '#C41F3B', 'Ranged': '#40C7EB' };
+let SPEC_DATA = {};
+
+function _classOf(value) { return typeof value === 'string' ? value : (value?.wow_class || value?.cls || ''); }
+function hasLust(value) {
+    const cls = _classOf(value);
+    if (cls === 'Hunter') return typeof value === 'object' && !!value.can_provide_lust;
+    return LUST_CLASSES.has(cls);
+}
+function hasBrez(value) { return BREZ_CLASSES.has(_classOf(value)); }
+function hasReliableInterrupt(player) {
+    const cls = _classOf(player);
+    const spec = player?.specialization || '';
+    if (cls === 'Warlock') return !!player?.can_interrupt;
+    if (cls === 'Priest') return false;
+    if (cls === 'Druid') return spec === 'Guardian' || spec === 'Feral';
+    if (cls === 'Evoker') return spec === 'Devastation' || spec === 'Augmentation';
+    if (cls === 'Monk') return spec === 'Brewmaster' || spec === 'Windwalker';
+    if (cls === 'Paladin') return spec === 'Protection' || spec === 'Retribution';
+    return ['Death Knight', 'Demon Hunter', 'Hunter', 'Mage', 'Rogue', 'Shaman', 'Warrior'].includes(cls);
+}

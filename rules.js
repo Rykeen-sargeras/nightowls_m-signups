@@ -1,0 +1,129 @@
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional
+from datetime import datetime
+
+VALID_SPECS: dict[str, dict[str, str]] = {
+    "Death Knight": {"Blood": "Tank", "Frost": "Melee", "Unholy": "Melee"},
+    "Demon Hunter": {"Havoc": "Melee", "Vengeance": "Tank", "Devourer": "Ranged"},
+    "Druid": {"Balance": "Ranged", "Feral": "Melee", "Guardian": "Tank", "Restoration": "Healer"},
+    "Evoker": {"Augmentation": "Ranged", "Devastation": "Ranged", "Preservation": "Healer"},
+    "Hunter": {"Beast Mastery": "Ranged", "Marksmanship": "Ranged", "Survival": "Melee"},
+    "Mage": {"Arcane": "Ranged", "Fire": "Ranged", "Frost": "Ranged"},
+    "Monk": {"Brewmaster": "Tank", "Mistweaver": "Healer", "Windwalker": "Melee"},
+    "Paladin": {"Holy": "Healer", "Protection": "Tank", "Retribution": "Melee"},
+    "Priest": {"Discipline": "Healer", "Holy": "Healer", "Shadow": "Ranged"},
+    "Rogue": {"Assassination": "Melee", "Outlaw": "Melee", "Subtlety": "Melee"},
+    "Shaman": {"Elemental": "Ranged", "Enhancement": "Melee", "Restoration": "Healer"},
+    "Warlock": {"Affliction": "Ranged", "Demonology": "Ranged", "Destruction": "Ranged"},
+    "Warrior": {"Arms": "Melee", "Fury": "Melee", "Protection": "Tank"},
+}
+
+LUST_CLASSES = {"Shaman", "Mage", "Evoker"}
+BREZ_CLASSES = {"Druid", "Paladin", "Warlock", "Death Knight"}
+
+
+def get_specs_for_class(wow_class: str) -> dict[str, str]:
+    return VALID_SPECS.get(wow_class, {})
+
+
+def has_lust(wow_class: str, can_provide_lust: bool | None = None) -> bool:
+    if wow_class == "Hunter":
+        return bool(can_provide_lust)
+    return wow_class in LUST_CLASSES
+
+
+def has_brez(wow_class: str) -> bool:
+    return wow_class in BREZ_CLASSES
+
+
+class SignupRequest(BaseModel):
+    username: str
+    wow_class: str
+    specialization: str
+    event_type: str = "mythicplus"
+    signup_status: str = "available"
+    can_provide_lust: bool = False
+    can_interrupt: bool = False
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        v = v.strip()
+        if not v or len(v) < 2 or len(v) > 24:
+            raise ValueError("Character name must be 2-24 characters")
+        return v
+
+    @field_validator("wow_class")
+    @classmethod
+    def validate_class(cls, v: str) -> str:
+        if v not in VALID_SPECS:
+            raise ValueError(f"Invalid class: {v}")
+        return v
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        if v not in ("mythicplus", "raid"):
+            raise ValueError("event_type must be 'mythicplus' or 'raid'")
+        return v
+
+    @field_validator("signup_status")
+    @classmethod
+    def validate_signup_status(cls, v: str) -> str:
+        if v not in ("available", "tentative", "late"):
+            raise ValueError("signup_status must be 'available', 'tentative', or 'late'")
+        return v
+
+
+class SignupResponse(BaseModel):
+    success: bool
+    message: str
+    player: Optional["PlayerOut"] = None
+
+
+class PlayerOut(BaseModel):
+    id: int
+    username: str
+    wow_class: str
+    specialization: str
+    role: str
+    group_index: str
+    event_type: str
+    signup_status: str
+    can_provide_lust: bool = False
+    can_interrupt: bool = False
+    signed_up_at: datetime
+    signup_number: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class RosterResponse(BaseModel):
+    players: list[PlayerOut]
+    is_locked: bool
+
+
+class AdminRequest(BaseModel):
+    password: str
+
+
+class SaveGroupsRequest(BaseModel):
+    password: str
+    groups: dict[str, str]
+
+
+class SortingSettingsRequest(BaseModel):
+    password: str
+    blocked_pairs: list[list[str]] = Field(default_factory=list)
+
+
+class PlayerUtilityRequest(BaseModel):
+    password: str
+    can_provide_lust: Optional[bool] = None
+    can_interrupt: Optional[bool] = None
+    utility_overrides: dict[str, bool] = Field(default_factory=dict)
+
+
+class ClassSpecResponse(BaseModel):
+    classes: dict[str, dict[str, str]]
